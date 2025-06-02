@@ -194,12 +194,12 @@ class Window(QMainWindow):
         if len(commands["RM"]) >= len(self.model.get_installeds()):
             raise Exception("WE DELETE ALL !")
             return
-        command = ""
+        command = "pacman -Sy;"
         if commands["ADD"]:
-            command = f"  pacman -S {' '.join(commands['ADD'])} --noconfirm;"
+            command = f"{command} pacman -S {' '.join(commands['ADD'])} --noconfirm;"
         if commands["RM"]:
             command = f"{command} pacman -Rsn {' '.join(commands['RM'])} --noconfirm"
-        if not command:
+        if len(command) < 60:
             return
         self.terminal.clear()
         self.terminal.append(f"# {command}")
