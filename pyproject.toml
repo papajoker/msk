@@ -1,0 +1,13 @@
+[project]
+name = "msk"
+version = "0.1.0"
+description = "Manjaro Setting Kernels"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyside6>=6.9.0", 
+]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
