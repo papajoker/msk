@@ -202,10 +202,10 @@ class Window(QMainWindow):
             command = f"{command} pacman -S {' '.join(commands['ADD'])} --noconfirm;"
         if commands["RM"]:
             command = f"{command} pacman -Rsn {' '.join(commands['RM'])} --noconfirm"
-        if len(command) < 60:
+        if len(command) < 16:
             return
         self.terminal.clear()
-        self.terminal.append(f"# {command}")
+        self.terminal.append(f"# {command}\n")
         print(f"# {command}")
         self.pacman.start_command(command)
 
@@ -230,6 +230,8 @@ class Window(QMainWindow):
     def handle_finished(self, exit_code, exit_status):
         self.running = False
         print(":: END", exit_code, exit_status)
+        if exit_code:
+            print("! One error ", exit_code)
         self.reload()
         self.update_terminal(False)  # not clear terminal
         self.setCursor(Qt.ArrowCursor)

@@ -1,3 +1,8 @@
+import os
+from textwrap import dedent
+from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from PySide6.QtCore import QProcess, QObject, Signal
 
 """
@@ -12,6 +17,7 @@ class PacmanWorker(QObject):
     started = Signal()
     finished = Signal(int, QProcess.ExitStatus)
     error = Signal(QProcess.ProcessError)
+    SCRIPT = Path("/tmp/msk.sh")
 
     def __init__(self):
         super().__init__()
@@ -25,18 +31,47 @@ class PacmanWorker(QObject):
         self.process.readyReadStandardError.connect(self._read_standard_error)
         self.process.finished.connect(self._handle_finished)
 
+    def __del__(self):
+        # self.SCRIPT.unlink(True)
+        pass
+
     def start_command(self, arguments: str):
         if arguments is None:
             return
         self.buffer_output = bytearray()
         self.buffer_error = bytearray()
 
+        script = self._create_script(arguments)
         cmd = "run0 --description='manjaro kernel' --unit=manjaroKernelTransaction --property='CPUQuota=80%' --background="
-        cmd = f"echo '{arguments}' | {cmd}"
-        print(f"::run : {cmd}")
+        # cmd = f"echo '{arguments}' | {cmd}"
+        print(f"::run : echo '{arguments}' | {cmd}")  # false
         self.process.startCommand(
-            f'bash -c "{cmd}"',
+            f'bash -c "{cmd} {script}"',
         )
+
+    def _create_script(self, arguments) -> str:
+        content = f"""\
+            #!/usr/bin/bash
+            set -e
+
+            echo -e "{self.get_log(arguments)}" >> /var/log/pacman.log && sleep 1
+
+            {arguments}
+        """
+        script = self.SCRIPT
+        script.write_text(dedent(content))
+        script.chmod(0o776)
+        return str(script)
+
+    @staticmethod
+    def get_log(msg):
+        tz_path = os.readlink("/etc/localtime")
+        tz_name = "/".join(tz_path.split("/")[4:])
+        now = datetime.now(ZoneInfo(tz_name))
+        result = now.isoformat(timespec="seconds")
+        if result[-6] in ("+", "-"):
+            result = f"{result[:-3]}{result[-2:]}"
+        return f"[{result}] [MSK] {msg}"
 
     def terminate(self):
         self.process.terminate()
