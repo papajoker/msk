@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from controler.pacman import PacmanWorker
+from controler.manager import KernelManager
 from model.kernel import Kernel, Kernels
 from ui.widgets import KernelMainWidget, ToolBar
 
@@ -22,9 +23,11 @@ LOCAL_FILE = Path(__file__).parent / "kernels.csv"
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self.initial_state = []
         self.choice = None
         self.model = self.reload()
+        self.manager = KernelManager(self.model)
         self._running = False
         self.toolbar_action = None
 
@@ -155,9 +158,9 @@ class Window(QMainWindow):
         state = ", ".join(states)
         if use_term:
             self.terminal.clear()
-            self.terminal.insertPlainText(f"installed: {installed}")
+            self.terminal.insertPlainText(f"{'installed :':12} {installed}")
             if installed != state:
-                self.terminal.append(f"state:   {state}")
+                self.terminal.append(f"{'want :':12} {state}")
                 if not self._running:
                     self.btn.setEnabled(True)
                 self.terminal.append("")

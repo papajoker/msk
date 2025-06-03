@@ -1,33 +1,41 @@
 from pathlib import Path
 import subprocess
-from kernel import Kernel, Kernels
+
+from PySide6.QtCore import QObject, Signal
+
+from model.kernel import Kernel, Kernels
 
 
-class KernelManager:
+class KernelManager(QObject):
     """
-    TODO : manage linux***-headers as `linux510-headers` ... `linux612-rt-headers`
-    TODO : manage ? linux-meta, linux-headers-meta ?
+    TODO : get code from ui.main.py
     """
 
-    # https://gitlab.manjaro.org/applications/application-utility/-/blob/master/application_utility/browser/alpm.py
-    # pamac-installer --remove pkg1 pkg2
-    # pamac-installer pkg1 pkg2  # install
-    # subprocess.run(['pamac-installer'] + install + pkg_list, capture_output=True, check=True)
-    # is NOT good, no return if Ok or not
-    # ? gui is fixed or not ?
-    # TODO test
-
-    """
-    best : use python binding:
-        import gi
-        gi.require_version("Pamac", "11")
-        from gi.repository import Pamac
-    """
+    usefull_or_not = Signal()
 
     def __init__(self, kernels: Kernels):
+        self.kernels = kernels
+        """
+            ? all kernels in list or only ok ?
+        """
+        self.origin = self.kernels.get_installeds()
+        self.todo = []
         # HELP usefull ??? is not in mhwd-kernels ?
         self.use_header = self._use_header(kernels)
         # TODO other modules ??? -nvidia-** , -r8168 ???
+
+    def origin_to_str(self) -> str:
+        return ", ".join(self.origin)
+
+    def todo_to_str(self) -> str:
+        return ", ".join(self.origin)
+
+    def compare(self) -> list:
+        #
+        [k for k in self.todo if k not in self.origin]
+        [k for k in self.origin if k not in self.todo]
+
+    # -- old to remove
 
     def get_pkg_list(self, kernels: list[Kernel]):
         results = []
