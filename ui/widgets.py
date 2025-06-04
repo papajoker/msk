@@ -1,4 +1,6 @@
 import webbrowser
+from PySide6.QtCore import QSize, Signal
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QWidget,
     QMenu,
@@ -6,7 +8,6 @@ from PySide6.QtWidgets import (
     QToolBar,
     QBoxLayout,
 )
-from PySide6.QtCore import QSize, Signal
 from model.kernel import Kernel
 
 
@@ -34,8 +35,8 @@ class KernelWidget(QPushButton):
         self.setToolTip(f" {self.kernel.name} {'\t(Real Time)' if self.kernel.isRT else ''}")
 
         self.menu = QMenu(self)
-        self.menu.addAction("Install " + self.kernel.name, self._on_install)
-        self.menu.addAction("Infos " + self.kernel.name, self._on_info)
+        self.menu.addAction(QIcon.fromTheme(QIcon.ThemeIcon.ListAdd), f"Install  {self.kernel.name}", self._on_install)
+        self.menu.addAction(QIcon.fromTheme(QIcon.ThemeIcon.DialogInformation), f"Infos  {self.kernel.name}", self._on_info)
         self.setMenu(self.menu)
 
     def _on_install(self):
@@ -74,8 +75,8 @@ class KernelMainWidget(KernelWidget):
 
         self.menu.clear()
         if not self.kernel.isActive:
-            self.menu.addAction("unInstall " + self.kernel.name, self._on_uninstall)
-        self.menu.addAction("Infos " + self.kernel.name, self._on_info)
+            self.menu.addAction(QIcon.fromTheme(QIcon.ThemeIcon.ListRemove), "unInstall " + self.kernel.name, self._on_uninstall)
+        self.menu.addAction(QIcon.fromTheme(QIcon.ThemeIcon.DialogInformation), "Infos " + self.kernel.name, self._on_info)
 
     def _on_uninstall(self):
         self.uninstall.emit(self.kernel)
