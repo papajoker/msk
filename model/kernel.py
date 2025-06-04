@@ -26,11 +26,16 @@ class Kernel:
     isInstalled: bool
     isActive: bool
 
+    class Selection(Enum):
+        OUT = 0
+        IN = 1
+
     CURRENT = ".".join(platform.release().split(".", maxsplit=2)[0:2])
 
     def __init__(self, name: str, version=""):
         self.name = name
         self.version = version
+        self.selection = self.Selection.OUT
 
         self.major = 0
         self.minor = 0
