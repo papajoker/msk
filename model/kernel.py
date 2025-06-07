@@ -9,6 +9,17 @@ import subprocess
 from urllib import request, error
 from typing import Self
 
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import (
+    QIcon,
+    QFontMetrics,
+    QPixmap,
+    QPalette,
+    QPainter,
+)
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtWidgets import QApplication
+
 
 """
 csv content = '''
@@ -54,6 +65,9 @@ class Kernel:
             if self.isActive:
                 self.isActive = "-rt" in platform.release()
 
+        maker = IconMaker(self)
+        self.icon = maker.make(128)
+
     def parse_version(self, name):
         name = name.removeprefix("linux")
         if name.endswith("-rt"):
@@ -77,11 +91,14 @@ class Kernel:
         return ".0rc" in self.version
 
     def isEOL(self) -> bool:
-        # TODO if branch:= unstable : async is present in unstable/core.db ?
-        pass
+        # TODO if branch:= unstable : async http get, is present in unstable/core.db ?
+        return False
 
     def get_changelog_url(self) -> str:
         return f"https://kernelnewbies.org/Linux_{self.major}.{self.minor}?action=print"
+
+    def __hash__(self) -> int:
+        return hash(self.name)
 
     def __str__(self) -> str:
         return (
@@ -142,7 +159,7 @@ class Kernels(list):
             return self.__call__(key)
         return super().__getitem__(key)
 
-    def get_installeds(self):
+    def get_installeds(self) -> list[Kernel]:
         return [k for k in self if k.isInstalled]
 
     @staticmethod
@@ -185,10 +202,10 @@ class Kernels(list):
         return kernels
 
     @staticmethod
-    def _get_kernels_from_gitlab():
+    def _get_kernels_from_gitlab() -> dict[str, list[str]]:
         """read manjaro datas from gitlab .c file"""
 
-        def filter(line):
+        def filter_line(line) -> bool:
             if "::getLtsKernels" in line or "::getRecommendedKernels" in line:
                 return True
             if "return QStringList() <<" in line:
@@ -200,13 +217,13 @@ class Kernels(list):
             "https://gitlab.manjaro.org/applications/manjaro-settings-manager/-/raw/master/src/libmsm/KernelModel.cpp",
             timeout=3,
         ) as response:
-            content = [l.replace('"', "").replace(";", "") for l in response.read().decode("utf-8").split("\n") if filter(l)]
+            content = [l.replace('"', "").replace(";", "") for l in response.read().decode("utf-8").split("\n") if filter_line(l)]
             results["LTS"] = [k.strip() for k in content[1].split("<<")[1:]]
             results["RECOMMENDED"] = [k.strip() for k in content[3].split("<<")[1:]]
         return results
 
     @staticmethod
-    def _get_lts_from_kernel_org():
+    def _get_lts_from_kernel_org() -> dict[str, list[str]]:
         import xml.etree.ElementTree as ET
 
         results = {"LTS": [], "RECOMMENDED": []}
@@ -216,17 +233,102 @@ class Kernels(list):
         ) as response:
             root = ET.fromstring(response.read().decode("utf-8"))[0]
             for title in root.iter("title"):
-                if "longterm" not in title.text:
+                if not title or "longterm" not in title.text:
                     continue
                 ver = title.text.split(".")[0:2]
                 results["LTS"].append(f"linux{ver[0]}{ver[1]}")
         return results
 
 
+class IconMaker:
+    def __init__(self, kernel: Kernel, size=128):
+        self.kernel = kernel
+        self.size = size
+
+    @staticmethod
+    def create_icon_from_svg_string(svg_string: str, size: QSize = QSize(128, 128)) -> QIcon:
+        renderer = QSvgRenderer(svg_string.encode("utf-8"))
+        pixmap = QPixmap(size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+
+        return QIcon(pixmap)
+
+    def main_color(self, palette) -> str:
+        if self.kernel.isActive:
+            return "#bb0000"
+        elif self.kernel.isInstalled:
+            return palette.color(QPalette.ColorRole.Highlight).name()
+        elif self.kernel.isRT:
+            return palette.color(QPalette.ColorRole.PlaceholderText).name()
+        return "#22aF4C"
+
+    def _get_puces(self) -> str:
+        radius, offset = 4, 6
+        puces = []
+        if self.kernel.isRT:
+            puces.append(f'<circle cx="{offset}" cy="{offset}" r="{radius}" fill="#FFD700"/>')
+        if self.kernel.isRecommanded:
+            puces.append(f'<circle cx="{self.size - offset}" cy="{offset}" r="{radius}" fill="#00FF00"/>')
+        if self.kernel.isActive:
+            puces.append(f'<circle cx="{offset}" cy="{self.size - offset}" r="{radius}" fill="#FF4500"/>')
+        if self.kernel.isInstalled and not self.kernel.isActive and not self.kernel.isActive:
+            puces.append(f'<circle cx="{self.size - offset}" cy="{self.size - offset}" r="{radius}" fill="#8A2BE2"/>')
+        return "".join(puces)
+
+    def _get_subtext(self, text_color) -> str:
+        if not self.kernel.isRT and not self.kernel.isLTS:
+            return ""
+        attrs = (
+            (str(self.size / 5.2)[:5], "RT"),
+            (str(self.size / 4.7)[:5], "LTS"),
+        )
+        if self.kernel.isRT:
+            attr = attrs[0]
+        if self.kernel.isLTS:
+            attr = attrs[1]
+        return f'<text x="{self.size / 2}" y="{self.size - self.size / 8}" dominant-baseline="middle" text-anchor="middle" font-size="{attr[0]}" fill="{text_color}">{attr[1]}</text>'
+
+    def make(self, icon_size: int) -> QIcon:
+        if icon_size:
+            self.size = icon_size
+        w, _ = self.get_heights()
+        width = w // 1.5
+
+        palette = QApplication.palette()
+
+        main_color = self.main_color(palette)
+
+        text_version = self.kernel.version
+        text_color = palette.color(QPalette.ColorRole.Text).name()
+
+        lts_svg = self._get_subtext(text_color)
+        puces_svg = self._get_puces()
+
+        svg_content = f"""
+            <svg width="{self.size}" height="{self.size}" viewBox="0 0 {self.size} {self.size}" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {lts_svg}
+                <circle cx="{self.size / 2}" cy="{self.size / 2}" r="{self.size / 2 - width / 2}" stroke="{main_color}" stroke-width="{width}" fill="none"/>
+                <text x="{self.size / 2}" y="{self.size / 2 + (self.size / w) + w / 2.5}" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="{self.size / 3.5}" fill="{text_color}">{text_version}</text>
+                {puces_svg}
+            </svg>
+        """
+        # print(svg_content)
+        return self.create_icon_from_svg_string(svg_content, QSize(self.size, self.size))
+
+    @staticmethod
+    def get_heights() -> tuple[int, int]:
+        metrics = QFontMetrics(QApplication.font())
+        line_height = metrics.height()
+        return line_height, line_height * 4
+
+
 if platform.freedesktop_os_release()["ID"].lower() != "manjaro":
     exit(66)
 if platform.machine() != "x86_64":
-    # kernel names differ !
     exit(67)
 
 if __name__ == "__main__":
