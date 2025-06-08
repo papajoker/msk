@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-
-
 from enum import Enum
-import os
+import sys
 from pathlib import Path
 import platform
 import subprocess
@@ -57,6 +54,7 @@ class Kernel:
         self.isRecommanded = False
         self.isInstalled = False
         self._set_installed()
+        self._initial_selection = self.isInstalled
 
         self.isActive = False
         if not self.isRT:
@@ -65,8 +63,12 @@ class Kernel:
             if self.isActive:
                 self.isActive = "-rt" in platform.release()
 
+        self.icon = self.setIcon()
+
+    def setIcon(self):
         maker = IconMaker(self)
         self.icon = maker.make(128)
+        return self.icon
 
     def parse_version(self, name):
         name = name.removeprefix("linux")
@@ -81,7 +83,9 @@ class Kernel:
         path = Path("/var/lib/pacman/local") / f"{self.name}-{self.version}"
         self.isInstalled = path.exists()
         if self.isInstalled and Path("/etc/mkinitcpio.d").exists():
+            self.selection = self.Selection.IN
             self.isInstalled = Path(f"/etc/mkinitcpio.d/{self.name}.preset").exists()
+        return self.isInstalled
 
     def get_ver(self) -> str:
         ret = f"{self.major}.{self.minor}"
@@ -96,6 +100,10 @@ class Kernel:
 
     def get_changelog_url(self) -> str:
         return f"https://kernelnewbies.org/Linux_{self.major}.{self.minor}?action=print"
+
+    @property
+    def has_changed(self) -> bool:
+        return self.selection != self._initial_selection
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -130,20 +138,22 @@ class Kernels(list):
         try:
             self.config = self._get_lts_from_kernel_org()
         except error.URLError as err:
-            print(f"no internet ! {err}\nwe use local datas", file=os.stderr)
+            print(f"no internet ! {err}\nwe use local datas", file=sys.stderr)
 
         try:
             self.config = self._get_kernels_from_gitlab()
         except error.URLError as err:
-            print(f"no internet ! {err}\nwe use local datas", file=os.stderr)
+            print(f"no internet ! {err}\nwe use local datas", file=sys.stderr)
 
         kernels = self.get_kernels()
         for k in self.config.get("LTS"):
             if kernel := kernels.get(k):
                 kernel.isLTS = True
+                kernel.setIcon()
         for k in self.config.get("RECOMMENDED"):
             if kernel := kernels.get(k):
                 kernel.isRecommanded = True
+                kernel.setIcon()
 
         for k in sorted((k for k in kernels.values()), reverse=True):
             self.append(k)
@@ -241,6 +251,10 @@ class Kernels(list):
 
 
 class IconMaker:
+    STAR_SVG = """
+        <polygon points="50,10 61,35 89,35 68,57 79,83 50,68 21,83 32,57 11,35 39,35" fill="currentColor"/>
+        """  # remove tag <svg...></svg> if want use manjaro logo
+
     def __init__(self, kernel: Kernel, size=128):
         self.kernel = kernel
         self.size = size
@@ -266,17 +280,30 @@ class IconMaker:
             return palette.color(QPalette.ColorRole.PlaceholderText).name()
         return "#22aF4C"
 
-    def _get_puces(self) -> str:
-        radius, offset = 4, 6
+    def _get_puces(self, line_height) -> str:
+        # radius, offset = size / 3, size / 1.5
         puces = []
-        if self.kernel.isRT:
-            puces.append(f'<circle cx="{offset}" cy="{offset}" r="{radius}" fill="#FFD700"/>')
         if self.kernel.isRecommanded:
-            puces.append(f'<circle cx="{self.size - offset}" cy="{offset}" r="{radius}" fill="#00FF00"/>')
+            star_color = "#22aF4C"
+            star_size_scale = line_height / 70
+            # puces.append(f'<circle cx="{self.size - offset}" cy="{offset}" r="{radius}" fill="#22aF4C"/>')
+            puces.append(f"""
+                    <g transform="translate({self.size - line_height - 2}, {2}) scale({star_size_scale})">
+                        {self.STAR_SVG.replace('fill="currentColor"', f'fill="{star_color}"')}
+                    </g>
+                """)
+
+        """
+        if self.kernel.isRT:
+            puces.append(f'<circle cx="{offset}" cy="{offset}" r="{radius}" fill="#333333"/>')
+
         if self.kernel.isActive:
-            puces.append(f'<circle cx="{offset}" cy="{self.size - offset}" r="{radius}" fill="#FF4500"/>')
-        if self.kernel.isInstalled and not self.kernel.isActive and not self.kernel.isActive:
-            puces.append(f'<circle cx="{self.size - offset}" cy="{self.size - offset}" r="{radius}" fill="#8A2BE2"/>')
+            puces.append(f'<circle cx="{offset}" cy="{self.size - offset}" r="{radius}" fill="#bb0000"/>')
+        if self.kernel.isInstalled and not self.kernel.isActive:
+            puces.append(f'<circle cx="{offset}" cy="{self.size - offset}" r="{radius}" fill="#8A2BE2"/>')
+        # right bottom is free ... cx="{self.size - offset}" cy="{self.size - offset}"
+        """
+
         return "".join(puces)
 
     def _get_subtext(self, text_color) -> str:
@@ -295,24 +322,24 @@ class IconMaker:
     def make(self, icon_size: int) -> QIcon:
         if icon_size:
             self.size = icon_size
-        w, _ = self.get_heights()
-        width = w // 1.5
+        h, _ = self.get_heights()
+        width = h // 1.5
 
         palette = QApplication.palette()
 
         main_color = self.main_color(palette)
 
-        text_version = self.kernel.version
+        text_version = f"{self.kernel.major}.{self.kernel.minor}"
         text_color = palette.color(QPalette.ColorRole.Text).name()
 
         lts_svg = self._get_subtext(text_color)
-        puces_svg = self._get_puces()
+        puces_svg = self._get_puces(h)
 
         svg_content = f"""
             <svg width="{self.size}" height="{self.size}" viewBox="0 0 {self.size} {self.size}" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {lts_svg}
                 <circle cx="{self.size / 2}" cy="{self.size / 2}" r="{self.size / 2 - width / 2}" stroke="{main_color}" stroke-width="{width}" fill="none"/>
-                <text x="{self.size / 2}" y="{self.size / 2 + (self.size / w) + w / 2.5}" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="{self.size / 3.5}" fill="{text_color}">{text_version}</text>
+                <text x="{self.size / 2}" y="{self.size / 2 + (self.size / h) + h / 2.5}" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="{self.size / 3.5}" fill="{text_color}">{text_version}</text>
                 {puces_svg}
             </svg>
         """
