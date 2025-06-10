@@ -69,6 +69,7 @@ class KernelModel(QAbstractTableModel):
                 f"{kernel.version}\n"
                 f"{'Real Time' if kernel.isRT else ''}\n"
                 "\n"
+                f"{'EOL\n' if kernel.isEOL else ''}"
                 f"{'Recommended\n' if kernel.isRecommanded else ''}"
                 f"{'Installed\n' if kernel.isInstalled else ''}"
                 f"{'Current\n' if kernel.isActive else ''}"
@@ -80,6 +81,9 @@ class KernelModel(QAbstractTableModel):
             return Qt.ItemFlag.ItemIsDropEnabled | Qt.ItemFlag.ItemIsEnabled
         kernel = self._data[index.row()]
         item_flags = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsDropEnabled
+
+        if kernel.isEOL and not kernel._initial_selection:
+            return item_flags
 
         if not kernel.isActive:
             item_flags |= Qt.ItemFlag.ItemIsDragEnabled
@@ -105,6 +109,9 @@ class KernelModel(QAbstractTableModel):
         if indexes:
             kernel = self._data[indexes[0].row()]
             if kernel.isActive:
+                return QMimeData()
+            if kernel.isEOL and not kernel._initial_selection:
+                # not install EOL kernel !
                 return QMimeData()
 
             data = kernel.name.encode("utf-8")

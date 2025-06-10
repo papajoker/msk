@@ -33,6 +33,7 @@ class Kernel:
     isRecommanded: bool
     isInstalled: bool
     isActive: bool
+    isEOL: bool
 
     class Selection(Enum):
         OUT = 0
@@ -51,6 +52,7 @@ class Kernel:
         self.parse_version(name)
 
         self.isLTS = False
+        self.isEOL = False
         self.isRecommanded = False
         self.isInstalled = False
         self._set_installed()
@@ -129,6 +131,7 @@ class Kernels(list):
     CURRENT = ".".join(platform.release().split(".", maxsplit=2)[0:2])
 
     def __init__(self):
+        super().__init__()
         self.config = {"LTS": [], "RECOMMENDED": []}
 
     def load_config(self, local_file: Path):
@@ -280,11 +283,11 @@ class IconMaker:
             return palette.color(QPalette.ColorRole.PlaceholderText).name()
         return "#22aF4C"
 
-    def _get_puces(self, line_height) -> str:
+    def _get_puces(self, line_height, palette) -> str:
         # radius, offset = size / 3, size / 1.5
         puces = []
         if self.kernel.isRecommanded:
-            star_color = "#22aF4C"
+            star_color = palette.color(QPalette.ColorRole.BrightText).name()  # "#22aF4C"
             star_size_scale = line_height / 70
             # puces.append(f'<circle cx="{self.size - offset}" cy="{offset}" r="{radius}" fill="#22aF4C"/>')
             puces.append(f"""
@@ -305,6 +308,27 @@ class IconMaker:
         """
 
         return "".join(puces)
+
+    def _get_eol(self, icon_size, line_height, palette) -> str:
+        if not self.kernel.isEOL:
+            return
+        cross_color = palette.color(QPalette.ColorRole.Dark).name()
+        cross_svg = ""
+        cross_stroke_width = line_height
+        margin = line_height * 1.5
+
+        x1_diag = margin
+        y1_diag = margin
+        x2_diag = icon_size - margin
+        y2_diag = icon_size - margin
+        cross_svg += f'<line x1="{x1_diag}" y1="{y1_diag}" x2="{x2_diag}" y2="{y2_diag}" stroke="{cross_color}" stroke-width="{cross_stroke_width}" stroke-linecap="round"/>'
+
+        x1_diag_alt = icon_size - margin
+        y1_diag_alt = margin
+        x2_diag_alt = margin
+        y2_diag_alt = icon_size - margin
+        cross_svg += f'<line x1="{x1_diag_alt}" y1="{y1_diag_alt}" x2="{x2_diag_alt}" y2="{y2_diag_alt}" stroke="{cross_color}" stroke-width="{cross_stroke_width}" stroke-linecap="round"/>'
+        return cross_svg
 
     def _get_subtext(self, text_color) -> str:
         if not self.kernel.isRT and not self.kernel.isLTS:
@@ -333,10 +357,11 @@ class IconMaker:
         text_color = palette.color(QPalette.ColorRole.Text).name()
 
         lts_svg = self._get_subtext(text_color)
-        puces_svg = self._get_puces(h)
+        puces_svg = self._get_puces(h, palette)
 
         svg_content = f"""
             <svg width="{self.size}" height="{self.size}" viewBox="0 0 {self.size} {self.size}" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {self._get_eol(icon_size, width, palette)}
                 {lts_svg}
                 <circle cx="{self.size / 2}" cy="{self.size / 2}" r="{self.size / 2 - width / 2}" stroke="{main_color}" stroke-width="{width}" fill="none"/>
                 <text x="{self.size / 2}" y="{self.size / 2 + (self.size / h) + h / 2.5}" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="{self.size / 3.5}" fill="{text_color}">{text_version}</text>

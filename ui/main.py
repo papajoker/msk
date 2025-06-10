@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 from controler.pacman import PacmanWorker
+from controler.eol import EolWorker, EolManager
 from model.kernel import Kernel, Kernels, IconMaker
 from model.store import KernelModel, KernelModelFilter, DifferenceKernelModel
 from ui.widgets import ListView, CustomToolBar
@@ -32,6 +33,7 @@ class Window(QMainWindow):
         self.kernels = None
         self.choice = None
         self.model_diff = None
+        self._eol_worker = None
 
         self.kernels = self.reload()
         self.model = KernelModel(self, self.kernels)
@@ -105,6 +107,10 @@ class Window(QMainWindow):
         print("todo: +", adds, "-", rms)
 
     def reload(self) -> Kernels:
+        worker = EolWorker()
+        # worker.finished.connect(worker.deleteLater)
+        worker.eol.connect(self.set_eol)
+        worker.start()
         kernels = Kernels()
         kernels.load_config(LOCAL_FILE)
 
@@ -115,6 +121,13 @@ class Window(QMainWindow):
             self.model_diff.setKernels(self.kernels)
             self._update_difference_list()
         return kernels
+
+    def set_eol(self, kernels: list[str]):
+        print(" -- set eol kernels:", kernels)
+        for name in kernels:
+            if kernel := self.kernels(name):
+                kernel.isEOL = True
+                kernel.setIcon()
 
     def _init_bar(self, line_height: int):
         toolbar = CustomToolBar("available kernels")
@@ -195,9 +208,9 @@ class Window(QMainWindow):
         if "--dev" in sys.argv:
             command += " exit 0;"
         if adds:
-            command = f"{command} pacman -S {' '.join(adds)} --noconfirm;"
+            command = f"{command} pacman -S {' '.join(adds)} --noconfirm --noprogressbar;"
         if rms:
-            command = f"{command} pacman -Rsn {' '.join(rms)} --noconfirm"
+            command = f"{command} pacman -Rsn {' '.join(rms)} --noconfirm --noprogressbar"
         if len(command) < 10:
             return
         self.terminal.clear()
@@ -239,5 +252,6 @@ class Window(QMainWindow):
     def closeEvent(self, event):
         if self.pacman.process.state() == QProcess.ProcessState.NotRunning:
             event.accept()
+            EolManager.DB_FILE.unlink(True)
         else:
             event.ignore()

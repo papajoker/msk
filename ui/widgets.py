@@ -1,6 +1,6 @@
 import webbrowser
 from PySide6.QtCore import Qt, QObject, Signal
-from PySide6.QtGui import QIcon, QDragEnterEvent
+from PySide6.QtGui import QIcon, QFont, QDragEnterEvent
 from PySide6.QtWidgets import QListView, QMenu, QSizePolicy, QToolBar
 from model.kernel import Kernel
 
@@ -44,6 +44,17 @@ class ListView(QListView):
             return
 
         menu = QMenu(self)
+        if kernel.isEOL:
+            # or ? self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning)
+            action = menu.addAction(QIcon.fromTheme(QIcon.ThemeIcon.SecurityLow), "End of Life", None)
+            action.triggered.connect(lambda: self.show_kernel_life(kernel))
+            f = action.font()
+            f.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 150)
+            f.setWeight(QFont.Weight.ExtraBold)
+            x = f.pointSize()
+            f.setPointSize(x * 1.3)
+            action.setFont(f)
+            menu.addSeparator()
         if kernel.selection == Kernel.Selection.IN:
             if not kernel.isActive:
                 menu.addAction(
@@ -52,11 +63,14 @@ class ListView(QListView):
                     lambda: self._on_uninstall(source_index, kernel),
                 )
         else:
-            menu.addAction(
-                QIcon.fromTheme(QIcon.ThemeIcon.ListAdd),
-                f"Install  {kernel.name} package",
-                lambda: self._on_install(source_index, kernel),
-            )
+            if kernel.isEOL and not kernel._initial_selection:
+                pass
+            else:
+                menu.addAction(
+                    QIcon.fromTheme(QIcon.ThemeIcon.ListAdd),
+                    f"Install  {kernel.name} package",
+                    lambda: self._on_install(source_index, kernel),
+                )
 
         action = menu.addAction(
             QIcon.fromTheme(QIcon.ThemeIcon.DialogInformation),
@@ -68,6 +82,10 @@ class ListView(QListView):
 
     def show_kernel_info(self, kernel: Kernel):
         url = kernel.get_changelog_url()
+        webbrowser.open(url, new=2)
+
+    def show_kernel_life(self, kernel: Kernel):
+        url = f"https://en.wikipedia.org/wiki/Linux_kernel_version_history#Releases_{kernel.major}.x.y"
         webbrowser.open(url, new=2)
 
     def _on_install(self, index, kernel: Kernel):
