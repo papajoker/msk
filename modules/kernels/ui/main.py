@@ -5,12 +5,13 @@ from PySide6.QtCore import Qt, QProcess, QSize
 from PySide6.QtGui import QIcon, QFontDatabase, QAction, QKeySequence
 from PySide6.QtWidgets import (
     QListView,
-    QMainWindow,
     QPushButton,
     QTextEdit,
     QStyle,
     QTabWidget,
     QVBoxLayout,
+    QHBoxLayout,
+    QSplitter,
     QWidget,
 )
 
@@ -23,9 +24,9 @@ from ui.widgets import ListView, CustomToolBar
 LOCAL_FILE = Path(__file__).parent / "kernels.csv"
 
 
-class Window(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class Window(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         line_height, _ = IconMaker.get_heights()
 
         self.initial_state = []
@@ -38,33 +39,31 @@ class Window(QMainWindow):
         self.kernels = self.reload()
         self.model = KernelModel(self, self.kernels)
         self.model_diff = DifferenceKernelModel(self, self.kernels)
-        # self.manager = KernelManager(self.kernels)
         self._running = False
         self.tabs = QTabWidget(tabPosition=QTabWidget.TabPosition.East, tabsClosable=False)
 
-        self.setWindowTitle("Manjaro System Kernels")
-        self.setMinimumSize(400, 335)
-        self.resize(780, 550)
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.SoftwareUpdateAvailable)
-        self.setWindowIcon(icon)
-
         self.choice = self._init_choices(line_height)
+        availables = self._init_bar(line_height)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.SoftwareUpdateAvailable)
         self.btn = QPushButton(icon, "run transaction")
         self.btn.setEnabled(False)
         self.btn.setToolTip("pacman command")
         self.btn.clicked.connect(self.run_command)
 
+        # mlayout = QVBoxLayout()
+        splitter = QSplitter(self)
+        splitter.setOrientation(Qt.Vertical)
+
         layout = QVBoxLayout()
         layout.addWidget(self.choice)
         layout.addWidget(self.btn)
 
-        # layout.addWidget(self._diff_list_view)
-
+        layoutH = QHBoxLayout()
+        layoutH.addLayout(layout, stretch=1)
+        layoutH.addWidget(availables)
         widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-        self.show()
+        widget.setLayout(layoutH)
 
         self.pacman = PacmanWorker()
         self.pacman.started.connect(self.handle_started)
@@ -75,7 +74,15 @@ class Window(QMainWindow):
 
         self._diff_list_view = self._init_diff()
         self._init_terminal()
-        self._init_bar(line_height)
+
+        # mlayout.addLayout(layoutH, stretch=1)
+        # mlayout.addWidget(self.tabs)
+
+        splitter.addWidget(widget)
+        splitter.addWidget(self.tabs)
+        layout = QVBoxLayout()
+        layout.addWidget(splitter)
+        self.setLayout(layout)
 
         self.model.layoutChanged.connect(self._update_difference_list)
         self.model.modelReset.connect(self._update_difference_list)
@@ -96,6 +103,7 @@ class Window(QMainWindow):
         before, after = self.model_diff.counts()
         title = "" if before == after else f" -> {after}"
         self.setWindowTitle(f"Manjaro System Kernels    {before}{title}")
+        self.parent().setWindowTitle(f"Manjaro System Kernels    {before}{title}")
 
         adds, rms = self.model_diff.todo()
         empty = not adds and not rms
@@ -108,7 +116,6 @@ class Window(QMainWindow):
 
     def reload(self) -> Kernels:
         worker = EolWorker()
-        # worker.finished.connect(worker.deleteLater)
         worker.eol.connect(self.set_eol)
         worker.start()
         kernels = Kernels()
@@ -130,8 +137,6 @@ class Window(QMainWindow):
                 kernel.setIcon()
 
     def _init_bar(self, line_height: int):
-        toolbar = CustomToolBar("available kernels")
-
         list_view = ListView()
         list_view.setIconSize(QSize(line_height * 3, line_height * 3))
 
@@ -139,13 +144,9 @@ class Window(QMainWindow):
         _available_proxy_model.setSourceModel(self.model)
         list_view.setModel(_available_proxy_model)
         list_view.move.connect(_available_proxy_model.handle_move)
-
-        toolbar.addWidget(list_view)
-        self.addToolBar(Qt.ToolBarArea.RightToolBarArea, toolbar)
+        return list_view
 
     def _init_terminal(self):
-        toolbar = CustomToolBar("terminal / transaction")
-
         self.terminal = QTextEdit(self)
         self.terminal.setVisible(True)
         self.terminal.setReadOnly(True)
@@ -162,18 +163,14 @@ class Window(QMainWindow):
             self.tabs.addTab(self._diff_list_view, QIcon.fromTheme(QIcon.ThemeIcon.DocumentProperties), "Action")
             self.tabs.setCurrentWidget(self._diff_list_view)
 
-        toolbar.addWidget(self.tabs)
-        self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, toolbar)
-
     def _init_choices(self, line_height: int):
         """display installed kernels"""
         list_view = ListView()
-        list_view.setIconSize(QSize(line_height * 5, line_height * 5))
+        list_view.setIconSize(QSize(line_height * 6, line_height * 6))
         _installed_proxy_model = KernelModelFilter(self, Kernel.Selection.IN)
         _installed_proxy_model.setSourceModel(self.model)
         list_view.setModel(_installed_proxy_model)
         list_view.move.connect(_installed_proxy_model.handle_move)
-
         return list_view
 
     def _init_diff(self):

@@ -6,17 +6,7 @@ import sys
 from urllib import request
 from pathlib import Path
 
-from PySide6.QtCore import QThread, QObject, Signal
-
-"""
-
-TODO
-msk.py linux66      # simulate EOL kernel -> change icon
-msk.py linux66-rt   # PLUTOT -> pas de drag si dans "availables" et non "installed" # donc ne peut installer, uniquement remove !
-
-.gz
-https://docs.python.org/fr/3.13/library/gzip.html#module-gzip
-"""
+from PySide6.QtCore import QThread, Signal
 
 
 def __del__(self):
