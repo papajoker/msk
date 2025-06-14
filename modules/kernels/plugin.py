@@ -18,8 +18,8 @@ class Plugin(PluginBase):
     def getTitle(cls) -> str:
         return cls.NAME
 
-    @staticmethod
-    def getIcon() -> QIcon:
+    @classmethod
+    def getIcon(cls) -> QIcon:
         return QIcon.fromTheme(QIcon.ThemeIcon.Computer)
 
     @staticmethod

@@ -7,20 +7,15 @@ from .._plugin.base import PluginBase
 
 sys.path.pop(0)
 
-from PySide6.QtGui import QIcon
-
 
 class Plugin(PluginBase):
     NAME = "User"
     ORDER = 20  # 10 by 10, order in main app
+    # COLOR = "#440066"
 
     @classmethod
     def getTitle(cls) -> str:
         return cls.NAME
-
-    @staticmethod
-    def getIcon() -> QIcon:
-        return QIcon.fromTheme(QIcon.ThemeIcon.GoHome)
 
     @staticmethod
     def isEnable() -> bool:
