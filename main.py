@@ -86,13 +86,16 @@ class MainWindow(QMainWindow):
                 continue
 
             if isinstance(self.tabs, QTabWidget):
-                tab_id = self.tabs.addTab(widget, plugin.getIcon(), "")
+                tab_id = self.tabs.addTab(
+                    widget,
+                    plugin.getIcon(self.tabs.iconSize().height()),
+                )
             else:
                 tab_id = self.tabs.addWidget(widget)
             count += 1
 
             # create entries
-            action = QAction(plugin.getIcon(), plugin.getTitle(), self)
+            action = QAction(plugin.getIcon(self.toolbar.iconSize().height()), plugin.getTitle(), self)
             action.triggered.connect(partial(self.change_module, tab_id, plugin.NAME))
             self.toolbar.addAction(action)
 
