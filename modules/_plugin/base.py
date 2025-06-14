@@ -56,8 +56,9 @@ class PluginBase(ABC):
         else:
             color = QColor(color)
 
-        dark = color.darker()
+        # dark = color.darker() # other way to Shadow color ?
         dark = palette.color(QPalette.ColorRole.Shadow)
+        dark.setAlpha(100)
         # painter.setPen(QPen(dark, 1))
         painter.setPen(dark)
 
@@ -71,7 +72,6 @@ class PluginBase(ABC):
         r = QRect(0, 0, size, size)
         # text Shadow
         painter.drawText(r.translated(2, 2), Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter, letter)
-        # r = QRect(0, 0, size, size)
         painter.setPen(QPen(QColor("white"), 1))
         painter.drawText(r, Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter, letter)
         painter.end()
