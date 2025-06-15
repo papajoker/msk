@@ -9,19 +9,25 @@ from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication
 
 
+def dark_theme_exists() -> bool:
+    """QT user have a light or dark theme ?"""
+    return QApplication.palette().color(QPalette.ColorRole.Text).lightnessF() <= 0.179
+
+
 class PluginBase(ABC):
     NAME = ""
     ORDER = 100
     CATEGORY = ""
-    COLOR = ""
+
+    def __init__(self, color=None):
+        self.color = color if color else ""
 
     @classmethod
     def getAction(cls):
         pass
 
-    @classmethod
-    def getIcon(cls, size) -> QIcon:
-        return cls.createIcon(cls.NAME[0].upper(), size, cls.COLOR)
+    def getIcon(self, size) -> QIcon:
+        return self.createIcon(self.NAME[0].upper(), size, self.color)
 
     @classmethod
     def getMenu(cls):
@@ -86,10 +92,10 @@ class PluginBase(ABC):
         color_h = palette.color(QPalette.ColorRole.BrightText).name()
         color_s = palette.color(QPalette.ColorRole.Shadow).name()
         if not color:
-            color = QColor(
-                random.randint(40, 200),
-                random.randint(40, 240),
-                random.randint(40, 200),
+            color.setHsv(
+                random.randint(0, 259),
+                random.randint(0, 200),
+                random.randint(0, 180),
             )
         else:
             color = QColor(color)
@@ -127,6 +133,37 @@ class PluginBase(ABC):
         return QIcon(pixmap)
 
 
+"""
+manager assign always sames colors
+"""
+colors = [
+    "#30b882",
+    "#f8da38",
+    "#bb9b93",
+    "#a451bb",
+    "#1f6d80",
+    "#603817",
+    "#d2dccc",
+    "#1e3058",
+    "#89d99c",
+    "#53c3d4",
+    "#fc6f60",
+    "#de00ee",
+    "#7e7e7f",
+    "#bc3a13",
+    "#5978cc",
+    "#348f3d",
+    "#a6a13e",
+    "#9e9bd6",
+    "#0e1d0a",
+    "#533796",
+    "#d3d56d",
+    "#9a5151",
+    "#333cd7",
+    "#38da38",
+]
+
+
 class PluginManager:
     def __init__(self):
         self.modules: dict[str, PluginBase] = {}
@@ -135,6 +172,7 @@ class PluginManager:
     def scan(self, path=""):
         if path:
             self.path = Path(path)
+        i = 0
         for directory in (d for d in self.path.iterdir() if d.is_dir() and not d.name.startswith("_")):
             name = directory.name
             file_ = directory / "plugin.py"
@@ -147,8 +185,13 @@ class PluginManager:
                 continue
             if mod:
                 try:
-                    # self.modules[name] = getattr(mod, "Plugin")
                     self.modules[name] = mod.Plugin()  # save the class instance
+                    i += 1
+                    try:
+                        self.modules[name].color = colors[i]
+                    except IndexError:
+                        i = 0
+                        self.modules[name].color = colors[i]
                 except AttributeError as err:
                     print(err)
                     # no class Plugin in file !
