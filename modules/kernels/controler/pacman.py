@@ -1,9 +1,10 @@
 import os
-from textwrap import dedent
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from textwrap import dedent
 from zoneinfo import ZoneInfo
-from PySide6.QtCore import QProcess, QObject, Signal
+
+from PySide6.QtCore import QObject, QProcess, Signal
 
 """
  run0 --description="manjaro kernel" --unit=manjaroKernelTransaction --property="CPUQuota=30%" --background= env

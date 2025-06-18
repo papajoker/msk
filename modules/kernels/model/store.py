@@ -1,15 +1,13 @@
+from model.kernel import Kernel, Kernels
 from PySide6.QtCore import (
-    Qt,
-    QObject,
-    QAbstractItemModel,
     QAbstractTableModel,
-    QAbstractProxyModel,
-    QSortFilterProxyModel,
     QMimeData,
     QModelIndex,
+    QObject,
+    QSortFilterProxyModel,
+    Qt,
 )
 from PySide6.QtWidgets import QStyle
-from model.kernel import Kernel, Kernels
 
 
 class KernelModel(QAbstractTableModel):
@@ -70,7 +68,7 @@ class KernelModel(QAbstractTableModel):
                 f"{'Real Time' if kernel.isRT else ''}\n"
                 "\n"
                 f"{'EOL\n' if kernel.isEOL else ''}"
-                f"{'Recommended\n' if kernel.isRecommanded else ''}"
+                f"{'Recommended\n' if kernel.isRecommended else ''}"
                 f"{'Installed\n' if kernel.isInstalled else ''}"
                 f"{'Current\n' if kernel.isActive else ''}"
                 # f"{kernel.selection.name.lower()}\n"
@@ -158,7 +156,7 @@ class KernelModelFilter(QSortFilterProxyModel):
             return True
         return False
 
-    def handle_move(self, source, index: QModelIndex, kernel: Kernel):
+    def handle_moved(self, source, index: QModelIndex, kernel: Kernel):
         source_model = self.sourceModel()
         kernel.selection = Kernel.Selection.OUT if kernel.selection == Kernel.Selection.IN else Kernel.Selection.IN
         source_model.dataChanged.emit(
@@ -196,10 +194,10 @@ class DifferenceKernelModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole:
             if kernel.selection == Kernel.Selection.IN and not kernel.isInstalled:
                 return f"+ {kernel.major}.{kernel.minor}{'-rt' if kernel.isRT else ''}"
-            elif kernel.selection == Kernel.Selection.OUT and kernel.isInstalled:
+            if kernel.selection == Kernel.Selection.OUT and kernel.isInstalled:
                 return f"- {kernel.major}.{kernel.minor}{'-rt' if kernel.isRT else ''}"
             return None
-        elif role == Qt.ItemDataRole.DecorationRole:
+        if role == Qt.ItemDataRole.DecorationRole:
             if (kernel.selection == Kernel.Selection.IN and not kernel.isInstalled) or (
                 kernel.selection == Kernel.Selection.OUT and kernel.isInstalled
             ):

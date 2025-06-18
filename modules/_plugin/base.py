@@ -1,10 +1,11 @@
+import importlib
+import random
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-import random
-import importlib.util
 
-from PySide6.QtCore import Qt, QRect, QSize
-from PySide6.QtGui import QIcon, QFont, QPainter, QBrush, QColor, QPen, QPixmap, QPalette
+from PySide6.QtCore import QRect, QSize, Qt
+from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication
 
@@ -23,23 +24,23 @@ class PluginBase(ABC):
         self.color = color if color else ""
 
     @classmethod
-    def getAction(cls):
+    def get_action(cls):
         pass
 
-    def getIcon(self, size) -> QIcon:
-        return self.createIcon(self.NAME[0].upper(), size, self.color)
+    def get_icon(self, size=48) -> QIcon:
+        return self.create_icon(self.NAME[0].upper(), size, self.color)
 
     @classmethod
-    def getMenu(cls):
+    def get_menu(cls):
         # if necessary ?
         pass
 
     @classmethod
-    def getTitle(cls) -> str:
+    def get_title(cls) -> str:
         return cls.NAME
 
     @staticmethod
-    def isEnable() -> bool:
+    def is_enable() -> bool:
         return True
 
     @staticmethod
@@ -48,12 +49,12 @@ class PluginBase(ABC):
         pass
 
     @staticmethod
-    def createIconOLD(letter: str, size=72, color=""):
+    def create_Icon_old(letter: str, size=72, color=""):
         palette = QApplication.palette()
         pixmap = QPixmap(size, size)  # Create a larger pixmap with extra width on the left
         pixmap.fill(QColor("transparent"))
         painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         if not color:
             r = random.randint(0, 255)
@@ -74,7 +75,7 @@ class PluginBase(ABC):
         painter.drawEllipse(0, 0, size, size)
         font = QFont()
         h = size * 0.8
-        font.setPixelSize(h)
+        font.setPixelSize(int(h))
         painter.setFont(font)
         r = QRect(0, 0, size, size)
         # text Shadow
@@ -85,14 +86,14 @@ class PluginBase(ABC):
         return QIcon(pixmap)
 
     @classmethod
-    def createIcon(cls, letter: str, size=72, color=""):
+    def create_icon(cls, letter: str, size=72, color=""):
         palette = QApplication.palette()
         color_txt = palette.color(QPalette.ColorRole.Text).name()
 
         color_h = palette.color(QPalette.ColorRole.BrightText).name()
         color_s = palette.color(QPalette.ColorRole.Shadow).name()
         if not color:
-            color.setHsv(
+            color = QColor.fromHsv(
                 random.randint(0, 259),
                 random.randint(0, 200),
                 random.randint(0, 180),
@@ -117,10 +118,10 @@ class PluginBase(ABC):
                 <text x="50" y="76" text-anchor="middle" font-family="Arial" font-size="72" fill="{color_h}">{letter.upper()}</text>
             </svg>
         """
-        return cls.create_icon_from_svg(content, size=QSize(size, size))
+        return cls._create_icon_from_svg(content, size=QSize(size, size))
 
     @staticmethod
-    def create_icon_from_svg(svg_content: str, size: QSize = QSize(128, 128)) -> QIcon:
+    def _create_icon_from_svg(svg_content: str, size: QSize = QSize(128, 128)) -> QIcon:
         # print(svg_string)
         renderer = QSvgRenderer(svg_content.encode("utf-8"))
         pixmap = QPixmap(size)
@@ -181,7 +182,7 @@ class PluginManager:
             try:
                 mod = importlib.import_module(f"{self.path.parts[-1]}.{name}.plugin")
             except ModuleNotFoundError as err:
-                print(err)
+                print(err, file=sys.stderr)
                 continue
             if mod:
                 try:
@@ -193,9 +194,8 @@ class PluginManager:
                         i = 0
                         self.modules[name].color = colors[i]
                 except AttributeError as err:
-                    print(err)
                     # no class Plugin in file !
-                    pass
+                    print(err, file=sys.stderr)
 
         # sort plugins
         sorts = {k: v for k, v in sorted(self.modules.items(), key=lambda item: item[1].ORDER)}

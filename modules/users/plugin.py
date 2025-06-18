@@ -14,11 +14,11 @@ class Plugin(PluginBase):
     # COLOR = "#440066"
 
     @classmethod
-    def getTitle(cls) -> str:
+    def get_title(cls) -> str:
         return cls.NAME
 
     @staticmethod
-    def isEnable() -> bool:
+    def is_enable() -> bool:
         # if kde : return False
         # or if wayland : return False
         return True

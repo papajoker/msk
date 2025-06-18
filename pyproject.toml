@@ -3,11 +3,49 @@ name = "msk"
 version = "0.1.0"
 description = "Manjaro Setting Kernels"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-    "pyside6>=6.9.0", 
+    "pyside6>=6.9.0",
+]
+
+[tool.urls]
+repository = "https://github.com/papajoker/msk"
+
+[tool.uv]
+environments = [
+    "sys_platform == 'linux'",
 ]
 
 [tool.uv.workspace]
 members = ["packages/*"]
 
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.black]
+line-length = 120
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.basic]
+# for only QT
+attr-naming-style = "any"
+method-naming-style = "any"
+
+[tool.pylint.messages_control]
+disable = ["fixme", "missing-docstring"]
+
+#[tool.pylint.refactoring]
+#never-returning-functions = ["sys.exit"]
+
+#[tool.pylint.miscellaneous]
+#notes = ["FIXME", "TODO"]

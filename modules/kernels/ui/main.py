@@ -1,25 +1,25 @@
-from pathlib import Path
 import re
 import sys
-from PySide6.QtCore import Qt, QProcess, QSize
-from PySide6.QtGui import QIcon, QFontDatabase, QAction, QKeySequence
+from pathlib import Path
+
+from controler.eol import EolManager, EolWorker
+from controler.pacman import PacmanWorker
+from model.kernel import IconMaker, Kernel, Kernels
+from model.store import DifferenceKernelModel, KernelModel, KernelModelFilter
+from PySide6.QtCore import QProcess, QSize, Qt
+from PySide6.QtGui import QAction, QFontDatabase, QIcon, QKeySequence
 from PySide6.QtWidgets import (
+    QHBoxLayout,
     QListView,
     QPushButton,
-    QTextEdit,
+    QSplitter,
     QStyle,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
-    QHBoxLayout,
-    QSplitter,
     QWidget,
 )
-
-from controler.pacman import PacmanWorker
-from controler.eol import EolWorker, EolManager
-from model.kernel import Kernel, Kernels, IconMaker
-from model.store import KernelModel, KernelModelFilter, DifferenceKernelModel
-from ui.widgets import ListView, CustomToolBar
+from ui.widgets import ListView
 
 LOCAL_FILE = Path(__file__).parent / "kernels.csv"
 
@@ -31,7 +31,7 @@ class Window(QWidget):
 
         self.initial_state = []
         self.model = None
-        self.kernels = None
+        self.kernels = Kernels()
         self.choice = None
         self.model_diff = None
         self._eol_worker = None
@@ -53,17 +53,17 @@ class Window(QWidget):
 
         # mlayout = QVBoxLayout()
         splitter = QSplitter(self)
-        splitter.setOrientation(Qt.Vertical)
+        splitter.setOrientation(Qt.Orientation.Vertical)
 
         layout = QVBoxLayout()
         layout.addWidget(self.choice)
         layout.addWidget(self.btn)
 
-        layoutH = QHBoxLayout()
-        layoutH.addLayout(layout, stretch=1)
-        layoutH.addWidget(availables)
+        layout_h = QHBoxLayout()
+        layout_h.addLayout(layout, stretch=1)
+        layout_h.addWidget(availables)
         widget = QWidget()
-        widget.setLayout(layoutH)
+        widget.setLayout(layout_h)
 
         self.pacman = PacmanWorker()
         self.pacman.started.connect(self.handle_started)
@@ -75,7 +75,7 @@ class Window(QWidget):
         self._diff_list_view = self._init_diff()
         self._init_terminal()
 
-        # mlayout.addLayout(layoutH, stretch=1)
+        # mlayout.addLayout(layout_h, stretch=1)
         # mlayout.addWidget(self.tabs)
 
         splitter.addWidget(widget)
@@ -143,7 +143,7 @@ class Window(QWidget):
         _available_proxy_model = KernelModelFilter(self, Kernel.Selection.OUT)
         _available_proxy_model.setSourceModel(self.model)
         list_view.setModel(_available_proxy_model)
-        list_view.move.connect(_available_proxy_model.handle_move)
+        list_view.moved.connect(_available_proxy_model.handle_moved)
         return list_view
 
     def _init_terminal(self):
@@ -152,7 +152,7 @@ class Window(QWidget):
         self.terminal.setReadOnly(True)
         self.terminal.setProperty("textInteractionFlags", 1)
         self.terminal.ensureCursorVisible()
-        self.terminal.setCurrentFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        self.terminal.setCurrentFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         self.terminal.setStyleSheet("QTextEdit { background-color:#222; color: #ccc; }")
         self.terminal.setMinimumSize(750, 150)
 
@@ -170,7 +170,7 @@ class Window(QWidget):
         _installed_proxy_model = KernelModelFilter(self, Kernel.Selection.IN)
         _installed_proxy_model.setSourceModel(self.model)
         list_view.setModel(_installed_proxy_model)
-        list_view.move.connect(_installed_proxy_model.handle_move)
+        list_view.moved.connect(_installed_proxy_model.handle_moved)
         return list_view
 
     def _init_diff(self):
@@ -208,6 +208,12 @@ class Window(QWidget):
             command = f"{command} pacman -S {' '.join(adds)} --noconfirm --noprogressbar;"
         if rms:
             command = f"{command} pacman -Rsn {' '.join(rms)} --noconfirm --noprogressbar"
+            if not Path("/usr/bin/update-grub").exists() and Path("/usr/bin/grub-mkconfig").exists():
+                command = f"{command} && grub-mkconfig -o /boot/grub/grub.cfg"
+                # as mhwd-kernels.update_grub() ?
+                sed = r"sed -i -e '/cryptomount -u/ {s/-//g;s/ u/ -u/g}' /boot/grub/grub.cfg"
+                command = f"{command} && {sed}"
+
         if len(command) < 10:
             return
         self.terminal.clear()
@@ -216,7 +222,7 @@ class Window(QWidget):
         self.pacman.start_command(command)
 
     def handle_started(self):
-        self.setCursor(Qt.WaitCursor)
+        self.setCursor(Qt.CursorShape.WaitCursor)
         self.running = True
         print(":: pacman started ...")
 
@@ -229,22 +235,22 @@ class Window(QWidget):
         self.terminal.append(f"{self.escape_ansi(line)}")
 
     def handle_stderr(self, line):
-        print(":: error:", line)
+        print(":: error:", line, file=sys.stderr)
         self.terminal.append(f'\'<span style="color:red;">{self.escape_ansi(line)}</span>')
         self.terminal.setVisible(True)
 
     def handle_error(self, err):
         # bad command
-        print(":: ERROR:", err)
+        print(":: ERROR:", err, file=sys.stderr)
         self.terminal.append(f'\'<span style="color:red;">{self.escape_ansi(err)}</span>')
 
     def handle_finished(self, exit_code, exit_status):
         self.running = False
         print(":: END", exit_code, exit_status)
         if exit_code:
-            print("! One error ", exit_code)
+            print("! One error ", exit_code, file=sys.stderr)
         self.reload()
-        self.setCursor(Qt.ArrowCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
 
     def closeEvent(self, event):
         if self.pacman.process.state() == QProcess.ProcessState.NotRunning:

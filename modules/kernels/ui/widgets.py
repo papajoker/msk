@@ -1,12 +1,14 @@
+import typing
 import webbrowser
-from PySide6.QtCore import Qt, QObject, Signal
-from PySide6.QtGui import QIcon, QFont, QDragEnterEvent
-from PySide6.QtWidgets import QListView, QMenu, QSizePolicy, QToolBar
+
 from model.kernel import Kernel
+from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtGui import QDragEnterEvent, QFont, QIcon
+from PySide6.QtWidgets import QListView, QMenu, QSizePolicy, QToolBar
 
 
 class ListView(QListView):
-    move = Signal(QListView, QObject, Kernel)
+    moved: typing.ClassVar[Signal] = Signal(QListView, QObject, Kernel)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -49,10 +51,10 @@ class ListView(QListView):
             action = menu.addAction(QIcon.fromTheme(QIcon.ThemeIcon.SecurityLow), "End of Life", None)
             action.triggered.connect(lambda: self.show_kernel_life(kernel))
             f = action.font()
-            f.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 150)
+            f.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 120)
             f.setWeight(QFont.Weight.ExtraBold)
             x = f.pointSize()
-            f.setPointSize(x * 1.3)
+            f.setPointSize(int(x * 1.2))
             action.setFont(f)
             menu.addSeparator()
         if kernel.selection == Kernel.Selection.IN:
@@ -89,10 +91,10 @@ class ListView(QListView):
         webbrowser.open(url, new=2)
 
     def _on_install(self, index, kernel: Kernel):
-        self.move.emit(self, index, kernel)
+        self.moved.emit(self, index, kernel)
 
     def _on_uninstall(self, index, kernel: Kernel):
-        self.move.emit(self, index, kernel)
+        self.moved.emit(self, index, kernel)
 
 
 class CustomToolBar(QToolBar):
@@ -100,4 +102,4 @@ class CustomToolBar(QToolBar):
         super().__init__(title)
         self.setMovable(False)
         self.setFloatable(False)
-        self.setContextMenuPolicy(Qt.PreventContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.PreventContextMenu)

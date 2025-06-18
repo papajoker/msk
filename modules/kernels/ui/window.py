@@ -1,25 +1,9 @@
 from pathlib import Path
-import re
-import sys
-from PySide6.QtCore import Qt, QProcess, QSize
-from PySide6.QtGui import QIcon, QFontDatabase, QAction, QKeySequence
-from PySide6.QtWidgets import (
-    QListView,
-    QMainWindow,
-    QPushButton,
-    QTextEdit,
-    QStyle,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-)
 
-from controler.pacman import PacmanWorker
-from controler.eol import EolWorker, EolManager
-from model.kernel import Kernel, Kernels, IconMaker
-from model.store import KernelModel, KernelModelFilter, DifferenceKernelModel
-from ui.widgets import ListView, CustomToolBar
-from ui.main import Window
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QMainWindow
+
+from .main import Window
 
 LOCAL_FILE = Path(__file__).parent / "kernels.csv"
 

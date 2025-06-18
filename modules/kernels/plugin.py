@@ -15,14 +15,14 @@ class Plugin(PluginBase):
     ORDER = 10  # 10 by 10, order in main app
 
     @classmethod
-    def getTitle(cls) -> str:
+    def get_title(cls) -> str:
         return cls.NAME
 
-    def getIcon(self, size) -> QIcon:
+    def get_icon(self, size=48) -> QIcon:
         return QIcon.fromTheme(QIcon.ThemeIcon.Computer)
 
     @staticmethod
-    def isEnable() -> bool:
+    def is_enable() -> bool:
         return True
 
     @staticmethod

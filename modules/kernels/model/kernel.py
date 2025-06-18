@@ -1,22 +1,15 @@
-from enum import Enum
-import sys
-from pathlib import Path
 import platform
 import subprocess
-from urllib import request, error
+import sys
+from enum import Enum
+from pathlib import Path
 from typing import Self
+from urllib import error, request
 
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import (
-    QIcon,
-    QFontMetrics,
-    QPixmap,
-    QPalette,
-    QPainter,
-)
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QFontMetrics, QIcon, QPainter, QPalette, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication
-
 
 """
 csv content = '''
@@ -30,7 +23,7 @@ class Kernel:
     name: str
     version: str
     isRT: bool
-    isRecommanded: bool
+    isRecommended: bool
     isInstalled: bool
     isActive: bool
     isEOL: bool
@@ -53,7 +46,7 @@ class Kernel:
 
         self.isLTS = False
         self.isEOL = False
-        self.isRecommanded = False
+        self.isRecommended = False
         self.isInstalled = False
         self._set_installed()
         self._initial_selection = self.isInstalled
@@ -96,10 +89,6 @@ class Kernel:
     def isExperimental(self) -> bool:
         return ".0rc" in self.version
 
-    def isEOL(self) -> bool:
-        # TODO if branch:= unstable : async http get, is present in unstable/core.db ?
-        return False
-
     def get_changelog_url(self) -> str:
         return f"https://kernelnewbies.org/Linux_{self.major}.{self.minor}?action=print"
 
@@ -111,9 +100,7 @@ class Kernel:
         return hash(self.name)
 
     def __str__(self) -> str:
-        return (
-            f"{self.name} -> {self.get_ver()} -> {self.version} {'(rt)' if self.isRT else ''} {'***' if self.isRecommanded else ''}"
-        )
+        return f"{self.name} -> {self.get_ver()} -> {self.version} {'(rt)' if self.isRT else ''} {'***' if self.isRecommended else ''}"
 
     def __lt__(self, other: Self):
         """for good sort"""
@@ -155,10 +142,10 @@ class Kernels(list):
                 kernel.setIcon()
         for k in self.config.get("RECOMMENDED"):
             if kernel := kernels.get(k):
-                kernel.isRecommanded = True
+                kernel.isRecommended = True
                 kernel.setIcon()
 
-        for k in sorted((k for k in kernels.values()), reverse=True):
+        for k in sorted(kernels.values(), reverse=True):
             self.append(k)
 
     def __call__(self, name: str) -> Kernel | None:
@@ -206,7 +193,7 @@ class Kernels(list):
         reg = r"LANG=en pacman -Si | grep -E '^(Name|Version)' | grep -E 'Name.*linux[0-9]{2,3}(-rt)?$' -A1"
 
         output = subprocess.run(reg, capture_output=True, shell=True, text=True, timeout=30).stdout
-        lines = iter(l for l in output.split("\n") if l and not l.startswith("--"))
+        lines = iter(line for line in output.split("\n") if line and not line.startswith("--"))
         kernels = {}
         for name, version in zip(lines, lines):
             name = name.split(":")[1].strip()
@@ -230,7 +217,11 @@ class Kernels(list):
             "https://gitlab.manjaro.org/applications/manjaro-settings-manager/-/raw/master/src/libmsm/KernelModel.cpp",
             timeout=3,
         ) as response:
-            content = [l.replace('"', "").replace(";", "") for l in response.read().decode("utf-8").split("\n") if filter_line(l)]
+            content = [
+                line.replace('"', "").replace(";", "")
+                for line in response.read().decode("utf-8").split("\n")
+                if filter_line(line)
+            ]
             results["LTS"] = [k.strip() for k in content[1].split("<<")[1:]]
             results["RECOMMENDED"] = [k.strip() for k in content[3].split("<<")[1:]]
         return results
@@ -246,7 +237,7 @@ class Kernels(list):
         ) as response:
             root = ET.fromstring(response.read().decode("utf-8"))[0]
             for title in root.iter("title"):
-                if not title or "longterm" not in title.text:
+                if "longterm" not in title.text:
                     continue
                 ver = title.text.split(".")[0:2]
                 results["LTS"].append(f"linux{ver[0]}{ver[1]}")
@@ -286,7 +277,7 @@ class IconMaker:
     def _get_puces(self, line_height, palette) -> str:
         # radius, offset = size / 3, size / 1.5
         puces = []
-        if self.kernel.isRecommanded:
+        if self.kernel.isRecommended:
             star_color = palette.color(QPalette.ColorRole.BrightText).name()  # "#22aF4C"
             star_size_scale = line_height / 70
             # puces.append(f'<circle cx="{self.size - offset}" cy="{offset}" r="{radius}" fill="#22aF4C"/>')
@@ -311,7 +302,7 @@ class IconMaker:
 
     def _get_eol(self, icon_size, line_height, palette) -> str:
         if not self.kernel.isEOL:
-            return
+            return ""
         cross_color = palette.color(QPalette.ColorRole.Dark).name()
         cross_svg = ""
         cross_stroke_width = line_height
@@ -397,7 +388,7 @@ if __name__ == "__main__":
 
         # @classmethod
         @staticmethod
-        def color(text: str, color: Self, long: int = 0):
+        def color(text: str, color: "Style", long: int = 0):
             return color.txt(text.ljust(long, " "))
 
     local_file = Path(__file__).parent / "kernels.csv"
@@ -411,7 +402,7 @@ if __name__ == "__main__":
     for k in kernels:
         v = f"{k.major}.{k.minor} {'LTS' if k.isLTS else ''}"
         print(
-            f"{Style.color(k.name, Style.GREEN if k.isLTS else Style.RESET, 12)} -> {k.get_ver():8}  {Style.GRAY.txt(k.version)} {'(rt)' if k.isRT else ''} {'***' if k.isRecommanded else ''} {Style.BLUE.txt('\tInstalled') if k.isInstalled else ''}",
+            f"{Style.color(k.name, Style.GREEN if k.isLTS else Style.RESET, 12)} -> {k.get_ver():8}  {Style.GRAY.txt(k.version)} {'(rt)' if k.isRT else ''} {'***' if k.isRecommended else ''} {Style.BLUE.txt('\tInstalled') if k.isInstalled else ''}",
             end="",
         )
         if k.isActive:

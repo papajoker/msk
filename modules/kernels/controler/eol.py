@@ -3,8 +3,8 @@ import gzip
 import re
 import subprocess
 import sys
-from urllib import request
 from pathlib import Path
+from urllib import request
 
 from PySide6.QtCore import QThread, Signal
 
@@ -15,7 +15,7 @@ def __del__(self):
 
 
 class EolManager:
-    DB_FILE = Path("/tmp/core.db")
+    DB_FILE = Path("/tmp/unstable.core.db")
 
     def __init__(self):
         self.state = 0
@@ -101,7 +101,7 @@ class EolManager:
             "pacman-conf -r core | grep '^Server' -m1", capture_output=True, shell=True, text=True, timeout=3
         ).stdout
         if not output or "/unstable/" in output:
-            return None
+            return ""
         url = output.split("=")[1].strip()
         url = url.replace("/stable/", "/unstable/")
         url = url.replace("/testing/", "/unstable/")

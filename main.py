@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-from functools import partial
-from modules._plugin.base import PluginBase, PluginManager
 import sys
+from functools import partial
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
@@ -13,6 +12,8 @@ from PySide6.QtWidgets import (
     QToolBar,
     QWidget,
 )
+
+from modules._plugin.base import PluginBase, PluginManager
 
 
 class MainWindow(QMainWindow):
@@ -71,7 +72,7 @@ class MainWindow(QMainWindow):
                 continue
             plugin: PluginBase = plugin_manager.modules[name]
 
-            if not plugin.isEnable():
+            if not plugin.is_enable():
                 # plugin is not for this desktop or config
                 continue
 
@@ -81,21 +82,22 @@ class MainWindow(QMainWindow):
                 continue
 
             widget = widget_class(self)
-            widget.windowTitleChanged.connect(self.handleWindowTitleChange)
+            widget.windowTitleChanged.connect(self.window_title_changed)
             if not widget:
                 continue
 
             if isinstance(self.tabs, QTabWidget):
                 tab_id = self.tabs.addTab(
                     widget,
-                    plugin.getIcon(self.tabs.iconSize().height()),
+                    plugin.get_icon(self.tabs.iconSize().height()),
+                    "",
                 )
             else:
                 tab_id = self.tabs.addWidget(widget)
             count += 1
 
             # create entries
-            action = QAction(plugin.getIcon(self.toolbar.iconSize().height()), plugin.getTitle(), self)
+            action = QAction(plugin.get_icon(self.toolbar.iconSize().height()), plugin.get_title(), self)
             action.triggered.connect(partial(self.change_module, tab_id, plugin.NAME))
             self.toolbar.addAction(action)
 
@@ -107,7 +109,7 @@ class MainWindow(QMainWindow):
     def change_module(self, tab_id: int, title: str):
         self.tabs.setCurrentIndex(tab_id)
 
-    def handleWindowTitleChange(self, title):
+    def window_title_changed(self, title):
         self.setWindowTitle(title)
 
     def usage(self, plugin_manager: PluginManager, want_one):
