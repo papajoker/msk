@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -19,8 +20,9 @@ class Plugin(PluginBase):
 
     @staticmethod
     def is_enable() -> bool:
-        # if kde : return False
-        # or if wayland : return False
+        if os.environ.get('XDG_CURRENT_DESKTOP') == "KDE":
+            print("User config exists with plasma")
+            #return False
         return True
 
     @staticmethod

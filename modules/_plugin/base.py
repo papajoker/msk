@@ -41,6 +41,8 @@ class PluginBase(ABC):
 
     @staticmethod
     def is_enable() -> bool:
+        # if not kesktop, or if desktop ...
+        # or if wayland : return False, or ?...
         return True
 
     @staticmethod
