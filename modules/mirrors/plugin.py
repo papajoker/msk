@@ -12,14 +12,13 @@ from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication, QGridLayout, QLabel, QPushButton, QStyle, QVBoxLayout, QWidget
 
 
-class Branch(Enum):
-    STABLE = 0
-    TESTING = 1
-    UNSTABLE = 2
-    NONE = 99
-
-
 class MirrorsWidget(QWidget):
+    class Branch(Enum):
+        STABLE = 0
+        TESTING = 1
+        UNSTABLE = 2
+        NONE = 99
+
     def __init__(self, parent: QWidget | None):
         super().__init__(parent=parent)
         self.status = None
@@ -38,8 +37,8 @@ class MirrorsWidget(QWidget):
         self.setWindowTitle(f"Local mirror status for {self.branch.name} branch")
         self.setLayout(layout_main)
 
-    @staticmethod
-    def get_branch() -> Branch:
+    @classmethod
+    def get_branch(cls) -> Branch:
         result = subprocess.run(
             "/usr/bin/pacman-conf -r core",
             capture_output=True,
@@ -50,10 +49,10 @@ class MirrorsWidget(QWidget):
         for line in result.stdout.splitlines():
             if not line.startswith("Server"):
                 continue
-            for branch in (b for b in Branch if b != Branch.NONE):
+            for branch in (b for b in cls.Branch if b != cls.Branch.NONE):
                 if f"/{branch.name.lower()}/" in line:
                     return branch
-        return Branch.NONE  # ???
+        return cls.Branch.NONE  # ???
 
     def _set(self) -> QGridLayout:
         """pacman-mirrors infos"""
