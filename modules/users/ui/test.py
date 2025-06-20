@@ -1,15 +1,15 @@
 from pathlib import Path
 
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QGridLayout, QLabel, QWidget
 
 
 class UserMain(QWidget):
     def __init__(self, parent: QWidget | None):
         super().__init__(parent=parent)
         self.setWindowTitle("Manage users")
-        self.mlayout = QVBoxLayout()
-        self.setLayout(self.mlayout)
+        layout = QGridLayout()
+        self.setLayout(layout)
 
         users = []
         with open("/etc/passwd") as f:
@@ -21,9 +21,9 @@ class UserMain(QWidget):
 
         # self.setStyleSheet("background-color: #909;")
 
-        for user in users:
+        for y, user in enumerate(users):
             label = QLabel(user[0], parent=self, margin=20)
-            self.mlayout.addWidget(label)
+            layout.addWidget(label, y, 1)
             label = QLabel()
             icon = None
             path = Path(f"/var/lib/AccountsService/icons/{user[1]}")
@@ -40,4 +40,4 @@ class UserMain(QWidget):
             if not icon or icon.isNull():
                 icon = QIcon.fromTheme("user-unknown").pixmap(48, 48)
             label.setPixmap(icon)
-            self.mlayout.addWidget(label)
+            layout.addWidget(label, y, 0)

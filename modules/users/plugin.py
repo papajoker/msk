@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from ui.test import UserMain
+
 from .._plugin.base import PluginBase
 
 sys.path.pop(0)
@@ -20,9 +21,9 @@ class Plugin(PluginBase):
 
     @staticmethod
     def is_enable() -> bool:
-        if os.environ.get('XDG_CURRENT_DESKTOP') == "KDE":
+        if os.environ.get("XDG_CURRENT_DESKTOP") == "KDE":
             print("User config exists with plasma")
-            #return False
+            # return False
         return True
 
     @staticmethod
