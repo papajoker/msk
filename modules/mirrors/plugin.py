@@ -1,15 +1,96 @@
+import json
 import subprocess
 import sys
 from enum import Enum
 from pathlib import Path
+from urllib import request
 
 sys.path.insert(0, str(Path(__file__).parent))
 from .._plugin.base import PluginBase
 
 sys.path.pop(0)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontMetrics
-from PySide6.QtWidgets import QApplication, QGridLayout, QLabel, QPushButton, QStyle, QVBoxLayout, QWidget
+from PySide6.QtCore import QAbstractTableModel, QSortFilterProxyModel, Qt
+from PySide6.QtGui import QColor, QFontMetrics
+from PySide6.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QSplitter,
+    QStyle,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
+
+URL = "https://repo.manjaro.org/status.json"
+'''
+    _json_type = """
+    [
+        {
+            "branches": [1,1,0],
+            "country": "Australia",
+            "last_sync": "06:49",
+            "protocols": ["https","http"],
+            "url": "https://mirror.aarnet.edu.au/pub/manjaro/"
+        },
+        ...
+    ]
+    """
+'''
+
+
+def get_online_status(url=URL, branch: int = 0):
+    try:
+        with request.urlopen(url, timeout=6) as response:
+            content = response.read().decode("utf-8")
+            if not content:
+                return []
+            for mirror in json.loads(content):
+                yield (
+                    mirror["url"].split("/")[2],
+                    mirror["country"],
+                    "9999:00" if isinstance(mirror["last_sync"], int) else mirror["last_sync"],
+                    mirror["branches"][branch],
+                )
+    except Exception as err:
+        print(f"ERROR, {url} not donloaded", err, file=sys.stderr)
+        raise
+    return []
+
+
+class TableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def data(self, index, role: Qt.ItemDataRole):
+        status = self._data[index.row()][3]
+        col = index.column()
+        if role == Qt.ItemDataRole.DisplayRole:
+            if col == 3:
+                return "✔️" if status == 1 else "❌"
+            return self._data[index.row()][col]
+
+        if role == Qt.ItemDataRole.ToolTipRole and col == 2:
+            return self._data[index.row()][2] if self._data[index.row()][2] != "9999:00" else "none"
+
+        if role == Qt.ItemDataRole.ForegroundRole and status != 1:
+            return QColor("#d00")
+
+    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+        HEADERS = ("url", "country", "last sync", "status")
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return str(HEADERS[section])
+            if orientation == Qt.Orientation.Vertical:
+                return str(section + 1)
+
+    def rowCount(self, index):
+        return len(self._data)
+
+    def columnCount(self, index):
+        return len(self._data[0]) if self._data else 0
 
 
 class MirrorsWidget(QWidget):
@@ -21,18 +102,38 @@ class MirrorsWidget(QWidget):
 
     def __init__(self, parent: QWidget | None):
         super().__init__(parent=parent)
+        self.model = None
         self.status = None
         self.branch = self.get_branch()
+        self.table = QTableView()
+        self.table.setSelectionBehavior(self.table.SelectionBehavior.SelectRows)
+        splitter = QSplitter(self)
+        splitter.setOrientation(Qt.Orientation.Vertical)
+        widget = QWidget()
+        layout_widget = QVBoxLayout()
+        widget.setLayout(layout_widget)
 
         layout_main = QVBoxLayout()
-        label = QLabel(f"Local mirror status for <b>{self.branch.name}</b> branch", parent=self, margin=20)
+        label = QLabel(f"Local mirror status for <b>{self.branch.name}</b> branch", parent=self, margin=10)
         label.setAlignment(Qt.AlignmentFlag.AlignHCenter or Qt.AlignmentFlag.AlignTop)
-        layout_main.addWidget(label, stretch=1)
+        layout_main.addWidget(label, stretch=0)
 
-        layout_main.addLayout(self._set(), stretch=0)
+        layout_widget.addLayout(self._set(), stretch=0)
         btn = QPushButton("Update mirror list", flat=True)
         btn.setEnabled(not self.status)  # can update only if first is False
-        layout_main.addWidget(btn)
+        layout_widget.addWidget(btn)
+
+        self.proxyModel = QSortFilterProxyModel()  # TODO make a custum sortProxy
+        self.model = TableModel(list(get_online_status(URL, self.branch.value)))
+        self.proxyModel.setSourceModel(self.model)
+        self.table.setModel(self.proxyModel)
+        self.table.setSortingEnabled(True)
+        self.table.resizeColumnsToContents()
+        # layout_main.addWidget(self.table)
+
+        splitter.addWidget(widget)
+        splitter.addWidget(self.table)
+        layout_main.addWidget(splitter)
 
         self.setWindowTitle(f"Local mirror status for {self.branch.name} branch")
         self.setLayout(layout_main)
@@ -75,7 +176,6 @@ class MirrorsWidget(QWidget):
 
         for y, line in enumerate(data):
             parts = line.split()
-            # print("->", parts)
             label = QLabel(parts[7], parent=self, margin=5)
             layout.addWidget(label, y, 0)
 
