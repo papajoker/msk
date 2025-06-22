@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QGridLayout, QLabel, QWidget
 
@@ -11,22 +12,41 @@ class UserMain(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
 
+        wheels = []
+        with open("/etc/group") as f:
+            """
+            wheel:x:998:one
+            """
+            for line in f:
+                if not line.startswith("wheel"):
+                    continue
+                if user := line.split(":")[-1].rstrip():
+                    wheels.append(user)
+
         users = []
         with open("/etc/passwd") as f:
+            """
+            ['one', 'x', '1000', '984', 'One User', '/home/one', '/usr/bin/fish\n']
+            ['two', 'x', '1001', '984', 'two User', '/home/two', '/usr/bin/bash\n']
+            """
             for line in f:
                 if "/home/" not in line:
                     continue
                 parts = line.split(":", maxsplit=6)
-                users.append([f"{parts[0]} ({parts[2]}) {parts[4]}", parts[0]])
-
-        # self.setStyleSheet("background-color: #909;")
+                users.append(
+                    (
+                        parts[0],
+                        parts[2],
+                        parts[4],
+                        parts[6].rstrip().split("/")[-1],
+                        parts[0] in wheels,
+                    )
+                )
 
         for y, user in enumerate(users):
-            label = QLabel(user[0], parent=self, margin=20)
-            layout.addWidget(label, y, 1)
             label = QLabel()
             icon = None
-            path = Path(f"/var/lib/AccountsService/icons/{user[1]}")
+            path = Path(f"/var/lib/AccountsService/icons/{user[0]}")
             if path.exists():
                 icon = QIcon(str(path)).pixmap(48, 48)
             else:
@@ -41,3 +61,17 @@ class UserMain(QWidget):
                 icon = QIcon.fromTheme("user-unknown").pixmap(48, 48)
             label.setPixmap(icon)
             layout.addWidget(label, y, 0)
+
+            label = QLabel(f"{user[0]}<br>{user[2]}", parent=self, margin=10, alignment=Qt.Alignment.AlignCenter)
+
+            layout.addWidget(label, y, 1)
+
+            label = QLabel(f"{user[1]}", parent=self, margin=10)
+            layout.addWidget(label, y, 2)
+
+            label = QLabel(f"{user[3]}", parent=self, margin=10)
+            layout.addWidget(label, y, 3)
+
+            if user[4]:
+                label = QLabel("<b>Admin</b>", parent=self, margin=10)
+                layout.addWidget(label, y, 4)
