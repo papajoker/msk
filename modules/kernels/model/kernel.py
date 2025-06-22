@@ -126,6 +126,7 @@ class Kernels(list):
             self.config = self._load_file(str(local_file))
 
         try:
+            # useful if gitlab ko
             self.config = self._get_lts_from_kernel_org()
         except error.URLError as err:
             print(f"no internet ! {err}\nwe use local datas", file=sys.stderr)

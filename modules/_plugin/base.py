@@ -1,3 +1,4 @@
+# import asyncio
 import importlib
 import random
 import sys
@@ -7,7 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QWidget
 
 
 def dark_theme_exists() -> bool:
@@ -204,3 +205,17 @@ class PluginManager:
         self.modules = sorts
 
         return self.modules
+
+    @staticmethod
+    def load_plugin(plugin: PluginBase, parent: QWidget) -> QWidget | None:
+        if not plugin.is_enable():
+            # plugin is not for this desktop or config
+            return None
+        widget_class = plugin.get_class()
+        if not widget_class or not issubclass(widget_class, QWidget):
+            return None
+
+        widget = widget_class(parent)
+        if not widget:
+            return None
+        return widget

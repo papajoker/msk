@@ -18,8 +18,10 @@ class Plugin(PluginBase):
     def get_title(cls) -> str:
         return cls.NAME
 
+    """
     def get_icon(self, size=48) -> QIcon:
         return QIcon.fromTheme(QIcon.ThemeIcon.Computer)
+    """
 
     @staticmethod
     def is_enable() -> bool:

@@ -9,11 +9,6 @@ from urllib import request
 from PySide6.QtCore import QThread, Signal
 
 
-def __del__(self):
-    print("DEL eol.py")
-    pass
-
-
 class EolManager:
     DB_FILE = Path("/tmp/unstable.core.db")
 
@@ -31,20 +26,20 @@ class EolManager:
         # self.DB_FILE.unlink(True)
         pass
 
-    def get_eol(self) -> tuple[str]:
+    def get_eol(self) -> list[str]:
         if not self.state or not self.unstable:
             return []
         if not self.kernels:
             self.kernels = sorted(list(self._get_current_kernels()))
 
-            print("  # --dev : add fake EOL kernels : 66 and 54")
             if "--dev" in sys.argv:
+                print("  # --dev : add fake EOL kernels : 66 and 54")
                 if i := self.unstable.index("linux66"):
                     del self.unstable[i]
                 if i := self.unstable.index("linux54"):
                     del self.unstable[i]
 
-        return tuple(k for k in self.kernels if k not in self.unstable)
+        return [k for k in self.kernels if k not in self.unstable]
 
     def download(self) -> bool:
         if self.DB_FILE.exists():
@@ -54,8 +49,8 @@ class EolManager:
             return False
         try:
             with request.urlopen(url, timeout=4) as response:
-                with open(self.DB_FILE, "wb") as download:
-                    download.write(response.read())
+                with open(self.DB_FILE, "wb") as downloaded:
+                    downloaded.write(response.read())
                     print("  #", self.DB_FILE, "downloaded")
                     return True
         except Exception:
