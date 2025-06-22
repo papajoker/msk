@@ -6,7 +6,11 @@ from pathlib import Path
 from urllib import request
 
 sys.path.insert(0, str(Path(__file__).parent))
-from .._plugin.base import PluginBase
+try:
+    from .._plugin.base import PluginBase
+except ImportError:
+    # for standalone app
+    pass
 
 sys.path.pop(0)
 from PySide6.QtCore import QAbstractTableModel, QSortFilterProxyModel, Qt
@@ -194,15 +198,20 @@ class MirrorsWidget(QWidget):
         return layout
 
 
-class Plugin(PluginBase):
-    NAME = "Mirrors manjaro"
-    ORDER = 100  # 10 by 10, order in main app
+try:
 
-    @staticmethod
-    def i_enable() -> bool:
-        return Path("/usr/bin/pacman-mirrors").exists()
+    class Plugin(PluginBase):
+        NAME = "Mirrors manjaro"
+        ORDER = 100  # 10 by 10, order in main app
 
-    @staticmethod
-    def get_class():
-        # return class and not instance
-        return MirrorsWidget
+        @staticmethod
+        def i_enable() -> bool:
+            return Path("/usr/bin/pacman-mirrors").exists()
+
+        @staticmethod
+        def get_class():
+            # return class and not instance
+            return MirrorsWidget
+except NameError:
+    # for standalone app
+    pass
