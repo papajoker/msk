@@ -3,7 +3,7 @@ import sys
 from functools import partial
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -77,7 +77,12 @@ class MainWindow(QMainWindow):
             count += 1
 
             # create entries
-            action = QAction(plugin.get_icon(self.toolbar.iconSize().height()), plugin.get_title(), self)
+            action = QAction(
+                plugin.get_icon(self.toolbar.iconSize().height()),
+                plugin.get_title(),
+                parent=self,
+                shortcut=QKeySequence().fromString(f"CTRL+{count}"),
+            )
             action.triggered.connect(partial(self.change_module, tab_id, plugin.NAME))
             self.toolbar.addAction(action)
             if count == 1:
