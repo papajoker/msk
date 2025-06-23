@@ -59,7 +59,6 @@ def get_online_status(url=URL, branch: int = 0):
                 )
     except Exception as err:
         print(f"ERROR, {url} not donloaded", err, file=sys.stderr)
-        raise
     return []
 
 
@@ -173,7 +172,8 @@ class MirrorsWidget(QWidget):
             )
             data = result.stdout.splitlines()[2:]
         except subprocess.CalledProcessError as e:
-            data = f"pacman-mirrors: {e}"
+            print(f"ERROR ! pacman-mirrors: {e}", file=sys.stderr)
+            data = ""
 
         metrics = QFontMetrics(QApplication.font())
         line_height = metrics.height() + 2
