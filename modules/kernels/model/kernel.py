@@ -79,7 +79,8 @@ class Kernel:
         self.isInstalled = path.exists()
         if self.isInstalled and Path("/etc/mkinitcpio.d").exists():
             self.selection = self.Selection.IN
-            self.isInstalled = Path(f"/etc/mkinitcpio.d/{self.name}.preset").exists()
+            self.isInstalled = True  # TODO remve, it's FIX for "fake kernels"
+            # self.isInstalled = Path(f"/etc/mkinitcpio.d/{self.name}.preset").exists()
         return self.isInstalled
 
     def get_ver(self) -> str:
@@ -164,7 +165,7 @@ class Kernels(list):
         return [k for k in self if k.isInstalled]
 
     @staticmethod
-    def _parse_file(content):
+    def _parse_file(content) -> dict[str, list[str]]:
         results = {"LTS": [], "RECOMMENDED": []}
         for line in content.split("\n"):
             if not line or line.startswith("#"):
@@ -174,7 +175,7 @@ class Kernels(list):
         return results
 
     @classmethod
-    def _load_file(cls, url: str) -> dict:
+    def _load_file(cls, url: str) -> dict[str, list[str]]:
         content = ""
         if url.startswith("http"):
             # TODO tests
@@ -188,6 +189,7 @@ class Kernels(list):
 
         if url.endswith("csv"):
             return cls._parse_file(content)
+        return {}
 
     @staticmethod
     def get_kernels() -> dict[str, Kernel]:
@@ -199,7 +201,9 @@ class Kernels(list):
         for name, version in zip(lines, lines):
             name = name.split(":")[1].strip()
             version = version.split(":")[1].strip()
-            kernels[name] = Kernel(name, version)
+            if name not in kernels:
+                # ignore duplicates
+                kernels[name] = Kernel(name, version)
         return kernels
 
     @staticmethod

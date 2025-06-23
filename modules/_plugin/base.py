@@ -10,6 +10,10 @@ from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPalette, QPen
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication, QWidget
 
+# TODO use a config.file in home for:
+# rename, order, disable plugins
+# ~/.config/msk.ini
+
 
 def dark_theme_exists() -> bool:
     """QT user have a light or dark theme ?"""
