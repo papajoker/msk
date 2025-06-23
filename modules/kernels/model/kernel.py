@@ -47,8 +47,7 @@ class Kernel:
         self.isLTS = False
         self.isEOL = False
         self.isRecommended = False
-        self.isInstalled = False
-        self._set_installed()
+        self.isInstalled = self._set_installed()
         self._initial_selection = self.isInstalled
 
         self.isActive = False
@@ -76,12 +75,9 @@ class Kernel:
     def _set_installed(self):
         # not perfect if partial update, prefer test if pacman -Qi self.name return 0
         path = Path("/var/lib/pacman/local") / f"{self.name}-{self.version}"
-        self.isInstalled = path.exists()
-        if self.isInstalled and Path("/etc/mkinitcpio.d").exists():
-            self.selection = self.Selection.IN
-            self.isInstalled = True  # TODO remve, it's FIX for "fake kernels"
-            # self.isInstalled = Path(f"/etc/mkinitcpio.d/{self.name}.preset").exists()
-        return self.isInstalled
+        is_installed = path.exists()
+        self.selection = self.Selection.IN if is_installed else self.Selection.OUT
+        return is_installed
 
     def get_ver(self) -> str:
         ret = f"{self.major}.{self.minor}"
