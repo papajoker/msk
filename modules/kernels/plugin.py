@@ -7,7 +7,7 @@ from .._plugin.base import PluginBase
 
 sys.path.pop(0)
 
-from PySide6.QtGui import QIcon
+# from PySide6.QtGui import QIcon
 
 
 class Plugin(PluginBase):

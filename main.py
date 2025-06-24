@@ -46,7 +46,6 @@ class MainWindow(QMainWindow):
 
         self.toolbar = QToolBar("modules")
         self.toolbar.setMovable(False)
-        self.toolbar.setIconSize(QSize(48, 48))
         self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
         self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
@@ -54,6 +53,8 @@ class MainWindow(QMainWindow):
         # self.load_plugins(want_one)
 
     def load_plugins(self, want_one=""):
+        w = self.plugins.get_icon_size()
+        self.toolbar.setIconSize(QSize(w, w))
         count = 0
         for name in self.plugins.modules:
             if want_one and name != want_one:
@@ -83,7 +84,7 @@ class MainWindow(QMainWindow):
                 parent=self,
                 shortcut=QKeySequence().fromString(f"CTRL+{count}"),
             )
-            action.triggered.connect(partial(self.change_module, tab_id, plugin.NAME))
+            action.triggered.connect(partial(self.change_module, tab_id, plugin.get_title()))
             self.toolbar.addAction(action)
             if count == 1:
                 self.toolbar.addSeparator()

@@ -2,6 +2,7 @@
 import importlib
 import random
 import sys
+import tomllib
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -24,16 +25,22 @@ class PluginBase(ABC):
     NAME = ""
     ORDER = 100
     CATEGORY = ""
+    COLOR: str
 
-    def __init__(self, color=None):
-        self.color = color if color else ""
+    def __init__(self):
+        raise Exception("can use only the class !")
+        # self.color = color if color else ""
+
+    def __repr__(self) -> str:
+        return f"PlugIn{{{self.NAME:14} ({self.ORDER}) [{self.CATEGORY}]}}"
 
     @classmethod
     def get_action(cls):
         pass
 
-    def get_icon(self, size=48) -> QIcon:
-        return self.create_icon(self.NAME[0].upper(), size, self.color)
+    @classmethod
+    def get_icon(cls, size=48) -> QIcon:
+        return cls.create_icon(cls.NAME[0].upper(), size, cls.COLOR)
 
     @classmethod
     def get_menu(cls):
@@ -174,6 +181,7 @@ colors = [
 
 class PluginManager:
     def __init__(self):
+        self._icon_size = 44
         self.modules: dict[str, PluginBase] = {}
         self.path = Path(__file__).parent.parent
 
@@ -193,13 +201,13 @@ class PluginManager:
                 continue
             if mod:
                 try:
-                    self.modules[name] = mod.Plugin()  # save the class instance
+                    self.modules[name] = mod.Plugin  # save the class # NO instance
                     i += 1
                     try:
-                        self.modules[name].color = colors[i]
+                        self.modules[name].COLOR = colors[i]
                     except IndexError:
                         i = 0
-                        self.modules[name].color = colors[i]
+                        self.modules[name].COLOR = colors[i]
                 except AttributeError as err:
                     # no class Plugin in file !
                     print(err, file=sys.stderr)
@@ -207,8 +215,38 @@ class PluginManager:
         # sort plugins
         sorts = {k: v for k, v in sorted(self.modules.items(), key=lambda item: item[1].ORDER)}
         self.modules = sorts
+        self.user_overwrite()
 
         return self.modules
+
+    def user_overwrite(self, file_name="msk.ini") -> None:
+        """Override the plugins with a user custom config."""
+        path_ = Path.home() / ".config" / file_name
+        if not path_.exists():
+            return
+
+        with open(path_, "rb") as f:
+            data = tomllib.load(f)
+        if not data:
+            return
+        self._icon_size = data["msm"].get("iconsize", self._icon_size)
+        self._icon_size = 8 if self._icon_size < 8 else self._icon_size
+        self._icon_size = 92 if self._icon_size > 92 else self._icon_size
+
+        for name, plugin in self.modules.items():
+            if name in data:
+                plugin.NAME = data[name].get("title", plugin.NAME)
+                plugin.COLOR = data[name].get("color", plugin.COLOR)
+                plugin.CATEGORY = data[name].get("category", plugin.CATEGORY)
+                if plugin.ORDER != 0 and data[name].get("disable", 0) == 1:
+                    plugin.is_enable = lambda: False
+                plugin.ORDER = data[name].get("order", plugin.ORDER)
+
+        sorts = {k: v for k, v in sorted(self.modules.items(), key=lambda item: item[1].ORDER)}
+        self.modules = sorts
+
+    def get_icon_size(self) -> int:
+        return self._icon_size
 
     @staticmethod
     def load_plugin(plugin: PluginBase, parent: QWidget) -> QWidget | None:
