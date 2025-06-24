@@ -2,10 +2,10 @@ import os
 import sys
 from pathlib import Path
 
+from .._plugin.base import PluginBase
+
 sys.path.insert(0, str(Path(__file__).parent))
 from ui.test import UserMain
-
-from .._plugin.base import PluginBase
 
 sys.path.pop(0)
 
