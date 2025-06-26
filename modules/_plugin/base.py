@@ -28,7 +28,7 @@ class PluginBase(ABC):
     COLOR: str
 
     def __init__(self):
-        raise Exception("can use only the class !")
+        raise RuntimeError("can use only the class !")
         # self.color = color if color else ""
 
     def __repr__(self) -> str:

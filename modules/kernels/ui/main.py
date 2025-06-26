@@ -33,7 +33,7 @@ class Window(QWidget):
         self.model = None
         self.kernels = Kernels()
         self.choice = None
-        self.model_diff = None
+        self.model_diff: DifferenceKernelModel = None
         self._eol_worker = None
 
         self.kernels = self.reload()
@@ -103,7 +103,8 @@ class Window(QWidget):
         before, after = self.model_diff.counts()
         title = "" if before == after else f" -> {after}"
         self.setWindowTitle(f"Manjaro System Kernels    {before}{title}")
-        self.parent().setWindowTitle(f"Manjaro System Kernels    {before}{title}")
+        if isinstance(self.parent(), QWidget):
+            self.parent().setWindowTitle(f"Manjaro System Kernels    {before}{title}")
 
         adds, rms = self.model_diff.todo()
         empty = not adds and not rms
@@ -199,7 +200,7 @@ class Window(QWidget):
         if not adds and not rms:
             return
         if len(rms) >= len(self.kernels.get_installeds()):
-            raise Exception("WE DELETE ALL !")
+            raise ValueError("WE DELETE ALL !")
 
         command = "pacman -Sy; "
         if "--dev" in sys.argv:

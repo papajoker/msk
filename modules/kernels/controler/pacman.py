@@ -22,8 +22,8 @@ class PacmanWorker(QObject):
 
     def __init__(self):
         super().__init__()
-        self.buffer_output = None
-        self.buffer_error = None
+        self.buffer_output: bytearray = None
+        self.buffer_error: bytearray = None
         self.process = QProcess(self)
 
         self.process.started.connect(self.started)
