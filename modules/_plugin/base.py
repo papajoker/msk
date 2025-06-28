@@ -11,10 +11,6 @@ from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPalette, QPen
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication, QWidget
 
-# TODO use a config.file in home for:
-# rename, order, disable plugins
-# ~/.config/msk.ini
-
 
 def dark_theme_exists() -> bool:
     """QT user have a light or dark theme ?"""
@@ -25,14 +21,14 @@ class PluginBase(ABC):
     NAME = ""
     ORDER = 100
     CATEGORY = ""
-    COLOR: str
+    COLOR: str = ""
 
     def __init__(self):
         raise RuntimeError("can use only the class !")
         # self.color = color if color else ""
 
     def __repr__(self) -> str:
-        return f"PlugIn{{{self.NAME:14} ({self.ORDER}) [{self.CATEGORY}]}}"
+        return f"PlugIn{{{self.NAME:14} {self.COLOR} ({self.ORDER}) [{self.CATEGORY}]}}"
 
     @classmethod
     def get_action(cls):
@@ -53,6 +49,7 @@ class PluginBase(ABC):
 
     @staticmethod
     def is_enable() -> bool:
+        """validate/devalidate this plugin"""
         # if not kesktop, or if desktop ...
         # or if wayland : return False, or ?...
         return True
@@ -60,6 +57,7 @@ class PluginBase(ABC):
     @staticmethod
     @abstractmethod
     def get_class() -> type:
+        """retur the main widjet class"""
         pass
 
     @staticmethod
@@ -115,7 +113,6 @@ class PluginBase(ABC):
         else:
             color = QColor(color)
         color_dark = color.darker(100)
-        # print(color, color_dark)
         content = f"""<?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
                 width="{size}" height="{size}"
@@ -186,9 +183,10 @@ class PluginManager:
         self.path = Path(__file__).parent.parent
 
     def scan(self, path=""):
+        """scan and store plugins in  directory"""
         if path:
             self.path = Path(path)
-        i = 0
+        i = 1
         for directory in (d for d in self.path.iterdir() if d.is_dir() and not d.name.startswith("_")):
             name = directory.name
             file_ = directory / "plugin.py"
@@ -202,12 +200,14 @@ class PluginManager:
             if mod:
                 try:
                     self.modules[name] = mod.Plugin  # save the class # NO instance
-                    i += 1
+                    if self.modules[name].COLOR:
+                        continue
                     try:
                         self.modules[name].COLOR = colors[i]
                     except IndexError:
-                        i = 0
+                        i = 1
                         self.modules[name].COLOR = colors[i]
+                    i += 1
                 except AttributeError as err:
                     # no class Plugin in file !
                     print(err, file=sys.stderr)
@@ -250,8 +250,9 @@ class PluginManager:
 
     @staticmethod
     def load_plugin(plugin: PluginBase, parent: QWidget) -> QWidget | None:
+        """create instance of the plugin widjet"""
         if not plugin.is_enable():
-            # plugin is not for this desktop or config
+            # plugin is not for this desktop or this config
             return None
         widget_class = plugin.get_class()
         if not widget_class or not issubclass(widget_class, QWidget):

@@ -50,11 +50,36 @@ class MainWindow(QMainWindow):
 
         self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
 
-        # self.load_plugins(want_one)
-
     def load_plugins(self, want_one=""):
-        w = self.plugins.get_icon_size()
-        self.toolbar.setIconSize(QSize(w, w))
+        icon_size = self.plugins.get_icon_size()
+        self.toolbar.setIconSize(QSize(icon_size, icon_size))
+
+        # create menu
+        count = 0
+        for name in self.plugins.modules:
+            if want_one and name != want_one:
+                continue
+            plugin: PluginBase = self.plugins.modules[name]
+
+            action = QAction(
+                plugin.get_icon(self.toolbar.iconSize().height()),
+                plugin.get_title(),
+                parent=self,
+                shortcut=QKeySequence().fromString(f"CTRL+{count + 1}"),
+            )
+            action.setObjectName(f"action_{name}")
+            action.setEnabled(False)
+            self.toolbar.addAction(action)
+            if count == 0:
+                self.toolbar.addSeparator()
+                sep = QWidget()
+                sep.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+                sep.setMinimumWidth(100)
+                self.toolbar.addWidget(sep)
+            count += 1
+            QApplication.processEvents()  # display "menu" before create Tabs ...
+
+        # after, create plugins (long time...)
         count = 0
         for name in self.plugins.modules:
             if want_one and name != want_one:
@@ -75,24 +100,13 @@ class MainWindow(QMainWindow):
                 )
             else:
                 tab_id = self.tabs.addWidget(widget)
-            count += 1
 
-            # create entries
-            action = QAction(
-                plugin.get_icon(self.toolbar.iconSize().height()),
-                plugin.get_title(),
-                parent=self,
-                shortcut=QKeySequence().fromString(f"CTRL+{count}"),
-            )
-            action.triggered.connect(partial(self.change_module, tab_id, plugin.get_title()))
-            self.toolbar.addAction(action)
-            if count == 1:
-                self.toolbar.addSeparator()
-                sep = QWidget()
-                sep.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
-                sep.setMinimumWidth(130)
-                self.toolbar.addWidget(sep)
-                QApplication.processEvents()  # display first tab before create others
+            if action := self.findChild(QAction, f"action_{name}"):
+                action.triggered.connect(partial(self.change_module, tab_id, plugin.get_title()))
+                action.setEnabled(True)
+
+            QApplication.processEvents()
+            count += 1
 
         self.toolbar.setVisible(count > 1)
 
