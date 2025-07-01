@@ -29,6 +29,9 @@ indent-style = "space"
 [tool.black]
 line-length = 120
 
+[tool.pylint.main]
+disable = ["pointless-string-statement", "no-name-in-module"]
+
 [tool.pylint.format]
 max-line-length = 120
 
