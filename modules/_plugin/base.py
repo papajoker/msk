@@ -1,4 +1,3 @@
-# import asyncio
 import importlib
 import random
 import sys
@@ -6,7 +5,7 @@ import tomllib
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from PySide6.QtCore import QRect, QSize, Qt
+from PySide6.QtCore import QObject, QRect, QSize, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication, QWidget
@@ -176,8 +175,12 @@ colors = [
 ]
 
 
-class PluginManager:
+class PluginManager(QObject):
+    loaded = Signal(QWidget, str)  # widget, plugin name
+    loaded_end = Signal()
+
     def __init__(self):
+        super().__init__()
         self._icon_size = 44
         self.modules: dict[str, PluginBase] = {}
         self.path = Path(__file__).parent.parent
@@ -249,16 +252,28 @@ class PluginManager:
         return self._icon_size
 
     @staticmethod
-    def load_plugin(plugin: PluginBase, parent: QWidget) -> QWidget | None:
+    def load_plugin(plugin: PluginBase, idx: str, parent: QWidget | None) -> tuple[QWidget | None, str]:
         """create instance of the plugin widjet"""
         if not plugin.is_enable():
             # plugin is not for this desktop or this config
-            return None
+            return None, idx
         widget_class = plugin.get_class()
         if not widget_class or not issubclass(widget_class, QWidget):
-            return None
+            return None, idx
 
         widget = widget_class(parent)
         if not widget:
-            return None
-        return widget
+            return None, idx
+        return widget, idx
+
+    def load_plugins(self, *, want_one: str = "", parent: QWidget):
+        """load all plugins and sends"""
+
+        for name, plugin in self.modules.items():
+            if want_one and name != want_one:
+                continue
+            widget, _ = self.load_plugin(plugin, name, parent=parent)
+            if widget:
+                self.loaded.emit(widget, name)
+            QApplication.processEvents()
+        self.loaded_end.emit()
