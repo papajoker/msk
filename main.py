@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Manjaro System Kernels")
         self.setWindowIcon(QIcon.fromTheme("manjaro"))
         self.setMinimumSize(400, 335)
-        self.resize(780, 550)
+        self.resize(790, 600)
 
         if self.USE_TABS:
             self.tabs = QTabWidget()  # TODO rewrite paint() for display icon + text in tab

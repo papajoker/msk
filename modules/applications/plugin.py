@@ -4,20 +4,21 @@ from pathlib import Path
 from .._plugin.base import PluginBase
 
 sys.path.insert(0, str(Path(__file__).parent))
-from .main import MaterialWidget
+# This is where the UI class will be imported
+from .ui.main import ApplicationsMain
 
 sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = "Material"
-    ORDER = 80  # 10 by 10, order in main app
+    NAME = "Applications"
+    ORDER = 95
 
-    @staticmethod
-    def i_enable() -> bool:
-        return Path("/usr/bin/mhwd").exists()
+    @classmethod
+    def get_title(cls) -> str:
+        return cls.NAME
 
     @staticmethod
     def get_class():
         # return class and not instance
-        return MaterialWidget
+        return ApplicationsMain
