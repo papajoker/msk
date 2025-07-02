@@ -81,7 +81,8 @@ class MainWindow(QMainWindow):
                 parent=self,
             )
             action.setObjectName(f"action_{name}")
-            action.setEnabled(False)  # only view the loading speed  #TODO comment for production
+            if "--dev" in sys.argv:
+                action.setEnabled(False)  # only view the loading speed  #TODO comment for production
             self.toolbar.addAction(action)
             if is_first:
                 self.toolbar.addSeparator()
