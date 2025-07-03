@@ -118,12 +118,19 @@ class ApplicationsMain(QWidget):
                 # If there are apps to show in this group, add the group and the apps
                 if filtered_apps:
                     group_item = QStandardItem(group["name"])
-                    group_item.setIcon(QIcon.fromTheme(group.get("icon", "folder")))
+                    icon = QIcon.fromTheme(group.get("icon", "folder"))
+                    if icon.isNull():
+                        icon = QIcon.fromTheme("folder")
+                    group_item.setIcon(icon)
                     model.appendRow(group_item)
 
                     for app in filtered_apps:
                         name_item = QStandardItem(app["name"])
-                        name_item.setIcon(QIcon.fromTheme(app.get("icon", "application-x-executable")))
+                        icon = QIcon.fromTheme(app.get("icon", "application-x-executable"))
+                        if icon.isNull():
+                            # print(" # -i", app["name"], app["pkg"])
+                            icon = QIcon.fromTheme("application-x-executable")
+                        name_item.setIcon(icon)
 
                         desc_item = QStandardItem(app["description"])
 
