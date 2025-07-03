@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 from pathlib import Path
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTreeView, QComboBox, QLabel, QHeaderView
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
@@ -15,6 +16,7 @@ class ApplicationsMain(QWidget):
 
         # Data
         self.applications_data = []
+        self.installeds = []
         self.current_group = "*"
         self.advanced_filter = False
         self.pending_changes = {"install": set(), "remove": set()}
@@ -68,6 +70,19 @@ class ApplicationsMain(QWidget):
         for group in self.applications_data:
             self.group_combo.addItem(group["name"])
 
+        pkgs = []
+        for group in (a["apps"] for a in self.applications_data):
+            pkgs.extend(x for x in (p["pkg"] for p in group))
+
+        output = subprocess.run(f"pacman -Qq {' '.join(pkgs)}", capture_output=True, shell=True, text=True, timeout=3).stdout
+        if not output:
+            return ""
+        self.installeds = output.splitlines()
+        # print(self.installeds)
+        for group in self.applications_data:
+            for app in group["apps"]:
+                app["installed"] = app["pkg"] in self.installeds
+
     def populate_view(self):
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(["Application", "Description", "Action"])
@@ -120,9 +135,12 @@ class ApplicationsMain(QWidget):
                         group_item.appendRow([name_item, desc_item, action_item])
 
         # Adjust column widths
-        self.tree_view.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.tree_view.header().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.tree_view.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.tree_view.header().setSectionsMovable(False)
+        self.tree_view.header().setStretchLastSection(False)
+        self.tree_view.header().setMinimumSectionSize(40)
+        self.tree_view.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.tree_view.header().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.tree_view.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
 
         if self.current_group != "*":
             self.tree_view.expandAll()
