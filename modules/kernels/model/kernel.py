@@ -3,7 +3,7 @@ import subprocess
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Self
+from typing import Generator, Self
 from urllib import error, request
 
 from PySide6.QtCore import QSize, Qt
@@ -46,6 +46,7 @@ class Kernel:
 
         self.isLTS = False
         self.isEOL = False
+        self.exists = True
         self.isRecommended = False
         self.isInstalled = self._set_installed()
         self._initial_selection = self.isInstalled
@@ -141,6 +142,11 @@ class Kernels(list):
         for k in self.config.get("RECOMMENDED"):
             if kernel := kernels.get(k):
                 kernel.isRecommended = True
+                kernel.setIcon()
+
+        for k in self._get_not_exists(k.name for k in kernels.values() if k.isInstalled):
+            if kernel := kernels.get(k):
+                kernel.exists = False
                 kernel.setIcon()
 
         for k in sorted(kernels.values(), reverse=True):
@@ -244,6 +250,24 @@ class Kernels(list):
                 results["LTS"].append(f"linux{ver[0]}{ver[1]}")
         return results
 
+    @staticmethod
+    def _get_not_exists(pkg_names=None) -> Generator:
+        """have some kernels installed not in repo ?"""
+        if not pkg_names:
+            return
+        output = subprocess.run(
+            f"LANG=C pacman -Si {' '.join(pkg_names)}", shell=True, text=True, capture_output=True, timeout=3
+        ).stderr
+        if not output:
+            return
+        for line in output.splitlines():
+            if not line.startswith("error:"):
+                continue
+            try:
+                yield line.split("'")[1]
+            except IndexError:
+                pass
+
 
 class IconMaker:
     STAR_SVG = """
@@ -257,14 +281,17 @@ class IconMaker:
     @staticmethod
     def create_icon_from_svg_string(svg_string: str, size: QSize = QSize(128, 128)) -> QIcon:
         renderer = QSvgRenderer(svg_string.encode("utf-8"))
-        pixmap = QPixmap(size)
-        pixmap.fill(Qt.GlobalColor.transparent)
+        if QApplication.instance():
+            pixmap = QPixmap(size)
+            print("y")
+            pixmap.fill(Qt.GlobalColor.transparent)
 
-        painter = QPainter(pixmap)
-        renderer.render(painter)
-        painter.end()
+            painter = QPainter(pixmap)
+            renderer.render(painter)
+            painter.end()
 
-        return QIcon(pixmap)
+            return QIcon(pixmap)
+        return None
 
     def main_color(self, palette) -> str:
         if self.kernel.isActive:
@@ -365,8 +392,10 @@ class IconMaker:
 
     @staticmethod
     def get_heights() -> tuple[int, int]:
-        metrics = QFontMetrics(QApplication.font())
-        line_height = metrics.height()
+        line_height = 18
+        if QApplication.instance():
+            metrics = QFontMetrics(QApplication.font())
+            line_height = metrics.height()
         return line_height, line_height * 4
 
 
@@ -397,6 +426,15 @@ if __name__ == "__main__":
     kernels = Kernels()
     kernels.load_config(local_file)
 
+    bad = Kernel("linux88", version="8.8.0-8")
+    bad.isInstalled = True
+    bad.selection = bad.Selection.IN
+    kernels.insert(0, bad)
+    for k in kernels._get_not_exists(k.name for k in kernels if k.isInstalled):
+        kernels(k).exists = False
+        print(k, "not exists in this branch but Installed !")
+    print()
+
     print("run:", "linux", platform.release())
     print()
 
@@ -406,8 +444,9 @@ if __name__ == "__main__":
             f"{Style.color(k.name, Style.GREEN if k.isLTS else Style.RESET, 12)} -> {k.get_ver():8}  {Style.GRAY.txt(k.version)} {'(rt)' if k.isRT else ''} {'***' if k.isRecommended else ''} {Style.BLUE.txt('\tInstalled') if k.isInstalled else ''}",
             end="",
         )
-        if k.isActive:
-            print(" ", Style.RED.txt("CURRENT"), end="")
+        print(" ", Style.RED.txt("CURRENT" if k.isActive else "      "), end="")
+        if not k.exists:
+            print(" ", Style.RED.txt("TO REMOVE !!!"), end="")
         print()
 
     print()
