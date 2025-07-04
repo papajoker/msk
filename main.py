@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
             """
             if action := self.findChild(QAction, f"action_{plugin_name}"):
                 action.activate(action.ActionEvent.Trigger)
+                QApplication.topLevelWindows()[0].requestActivate()
 
             # self.truc.setEditText(data[5:])
         else:
