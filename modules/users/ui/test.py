@@ -3,6 +3,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QGridLayout, QLabel, QWidget
+from .widgets import RoundIconLabel
 
 
 class UserMain(QWidget):
@@ -59,8 +60,10 @@ class UserMain(QWidget):
 
             if not icon or icon.isNull():
                 icon = QIcon.fromTheme("user-unknown").pixmap(48, 48)
-            label.setPixmap(icon)
-            layout.addWidget(label, y, 0)
+            icon = RoundIconLabel(self, path)
+            layout.addWidget(icon, y, 0)
+            # label.setPixmap(icon)
+            # layout.addWidget(label, y, 0)
 
             label = QLabel(f"{user[0]}<br>{user[2]}", parent=self, margin=10, alignment=Qt.Alignment.AlignCenter)
 
