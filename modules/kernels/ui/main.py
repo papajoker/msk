@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from ui.widgets import ListView
+from .widgets import ListView
 
 LOCAL_FILE = Path(__file__).parent / "kernels.csv"
 

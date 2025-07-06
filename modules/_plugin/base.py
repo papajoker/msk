@@ -188,7 +188,11 @@ class PluginManager(QObject):
     def scan(self, path=""):
         """scan and store plugins in  directory"""
         if path:
-            self.path = Path(path)
+            if path.startswith("/"):
+                self.path = Path(path)
+            else:
+                self.path = Path(__file__).parent.parent.parent / path
+
         i = 1
         for directory in (d for d in self.path.iterdir() if d.is_dir() and not d.name.startswith("_")):
             name = directory.name
@@ -196,10 +200,15 @@ class PluginManager(QObject):
             if not file_.exists():
                 continue
             try:
-                mod = importlib.import_module(f"{self.path.parts[-1]}.{name}.plugin")
+                if len(sys.argv) > 1:
+                    print("  # load ...", f"{self.path.parts[-1]}.{name}.plugin")
+                mod = importlib.import_module(f"{self.path.parts[-1]}.{name}.plugin", package=name)
             except ModuleNotFoundError as err:
                 print(err, file=sys.stderr)
                 continue
+            except ImportError as err:
+                print(err, file=sys.stderr)
+                raise
             if mod:
                 try:
                     self.modules[name] = mod.Plugin  # save the class # NO instance

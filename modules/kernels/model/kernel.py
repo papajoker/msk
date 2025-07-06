@@ -98,7 +98,9 @@ class Kernel:
         return hash(self.name)
 
     def __str__(self) -> str:
-        return f"{self.name} -> {self.get_ver()} -> {self.version} {'(rt)' if self.isRT else ''} {'***' if self.isRecommended else ''}"
+        return (
+            f"{self.name} -> {self.get_ver()} -> {self.version} {'(rt)' if self.isRT else ''} {'***' if self.isRecommended else ''}"
+        )
 
     def __lt__(self, other: Self):
         """for good sort"""
@@ -225,9 +227,7 @@ class Kernels(list):
             timeout=3,
         ) as response:
             content = [
-                line.replace('"', "").replace(";", "")
-                for line in response.read().decode("utf-8").split("\n")
-                if filter_line(line)
+                line.replace('"', "").replace(";", "") for line in response.read().decode("utf-8").split("\n") if filter_line(line)
             ]
             results["LTS"] = [k.strip() for k in content[1].split("<<")[1:]]
             results["RECOMMENDED"] = [k.strip() for k in content[3].split("<<")[1:]]
@@ -283,7 +283,6 @@ class IconMaker:
         renderer = QSvgRenderer(svg_string.encode("utf-8"))
         if QApplication.instance():
             pixmap = QPixmap(size)
-            print("y")
             pixmap.fill(Qt.GlobalColor.transparent)
 
             painter = QPainter(pixmap)
