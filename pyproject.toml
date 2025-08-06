@@ -1,5 +1,5 @@
 [project]
-name = "msm-test"
+name = "msm_test"
 version = "0.9.0"
 description = "Manjaro Setting Kernels"
 readme = "README.md"
@@ -19,13 +19,13 @@ requires = ["setuptools>=80.9"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["msm-test"]
-# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#flat-layout
+# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
 include-package-data = true
 
-#[tool.setuptools.packages.find]
-#where = ["."]
-#exclude = ["tests","_design"]
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["."]
+exclude = ["tests","_design"]
 
 [tool.setuptools.package-data]
 "*" = ["**.json", "**.desktop"]
