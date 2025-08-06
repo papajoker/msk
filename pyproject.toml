@@ -28,7 +28,7 @@ where = ["."]
 exclude = ["tests","_design"]
 
 [tool.setuptools.package-data]
-"*" = ["**.json", "**.desktop"]
+"*" = ["**.json", "**.desktop", "assets/*.svg"]
 
 [tool.uv.workspace]
 members = ["packages/*"]
