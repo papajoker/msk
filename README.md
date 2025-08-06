@@ -6,21 +6,21 @@
 load with plugins
 
 ```
-~/WORK/main.py
+uv run -m msm-test
 ```
 
 load with one plugin
 
 ```
-~/WORK/main.py --kernels
+uv run -m msm-test --users
 ```
 
 standalone plugin
 
 ```
-~/WORK/modules/kernels/main.py
-~/WORK/modules/mirrors/main.py
-~/WORK/modules/users/main.py
+~/WORK/msm-test/modules/kernels/main.py
+~/WORK/msm-test/modules/mirrors/main.py
+~/WORK/msm-test/modules/users/main.py
 ```
 
 ### user config
