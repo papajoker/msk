@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-python -m msm-test
+python -m msm_test
