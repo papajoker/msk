@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=MSM Test
+Exec=python -m msm-test
+Icon=preferences-system
+Terminal=false
+Categories=System;Settings;

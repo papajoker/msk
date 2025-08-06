@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from modules._plugin.base import PluginBase, PluginManager
+from .modules._plugin.base import PluginBase, PluginManager
 
 
 class MainWindow(QMainWindow):

@@ -194,6 +194,7 @@ class PluginManager(QObject):
                 self.path = Path(__file__).parent.parent.parent / path
 
         i = 1
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
         for directory in (d for d in self.path.iterdir() if d.is_dir() and not d.name.startswith("_")):
             name = directory.name
             file_ = directory / "plugin.py"

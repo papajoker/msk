@@ -398,10 +398,14 @@ class IconMaker:
         return line_height, line_height * 4
 
 
+'''
 if platform.freedesktop_os_release()["ID"].lower() != "manjaro":
+    print("Only for manjaro", file=sys.stderr)
     exit(66)
 if platform.machine() != "x86_64":
+    print("Only x86 cpu", file=sys.stderr)
     exit(67)
+'''
 
 if __name__ == "__main__":
 
