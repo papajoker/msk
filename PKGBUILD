@@ -22,8 +22,10 @@ makedepends=("git" "python-build" "python-installer")
 
 build() {
   cd "msk-${pkgver}"
-  touch "$py_pkg/modules/__init__.py"
-  touch "$py_pkg/modules/_plugin/__init__.py"
+  #cp ../../pyproject.toml .
+  #echo 'version="1.0.0a1"' >msm_ng/__init__.py
+  #touch "$py_pkg/modules/__init__.py"
+  #touch "$py_pkg/modules/_plugin/__init__.py"
   python -m build --wheel --no-isolation
 }
 
@@ -36,4 +38,3 @@ package() {
   install -Dm644 "${srcdir}/msk-${pkgver}/$py_pkg/msm-test.desktop" "${pkgdir}/usr/share/applications/"
   install -Dm755 "${srcdir}/msk-${pkgver}/${py_pkg}/run.sh" "${pkgdir}/usr/bin/msm-test"
 }
-

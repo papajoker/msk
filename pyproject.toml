@@ -1,6 +1,6 @@
 [project]
-name = "msm_test"
-version = "0.9.0"
+name = "msm_ng"
+dynamic = ["version"]
 description = "Manjaro Setting Kernels"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -14,9 +14,9 @@ environments = ["sys_platform == 'linux'"]
 
 ## ------------
 
-[build-system]
-requires = ["setuptools>=80.9"]
-build-backend = "setuptools.build_meta"
+#[build-system]
+#requires = ["setuptools>=80.9"]
+#build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 # https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
@@ -30,10 +30,36 @@ exclude = ["tests","_design"]
 [tool.setuptools.package-data]
 "*" = ["**.json", "**.desktop", "assets/*.svg"]
 
+## --------- for create package
+
+
+[build-system]
+# pacman : python-hatchling
+# in terminal/pkgbuild : `python -m build` [-v] or `uv build`
+requires = ["hatchling>=1.14"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+msm-gui = "msm_ng.__main__:main"
+
+[tool.hatch.build.targets]
+packages = ["msm_ng/"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["msm_ng/"]
+
+[tool.hatch.envs.hatch-build]
+installer = "pip"  # default == uv
+
+[tool.hatch.version]
+path = "msm_ng/__init__.py"
+
 [tool.uv.workspace]
 members = ["packages/*"]
 
-## ------------
+
+## --------- setting python tools
+
 
 [tool.ruff]
 line-length = 120

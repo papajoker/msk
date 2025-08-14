@@ -41,11 +41,15 @@ class MainWindow(QMainWindow):
         self.resize(790, 600)
 
         if self.USE_TABS:
-            self.tabs = QTabWidget()  # TODO rewrite paint() for display icon + text in tab
+            self.tabs = (
+                QTabWidget()
+            )  # TODO rewrite paint() for display icon + text in tab
             self.tabs.setTabPosition(QTabWidget.TabPosition.East)
             self.tabs.setIconSize(QSize(42, 42))
             self.tabs.setTabBarAutoHide(True)
-            self.tabs.setStyleSheet("QTabBar::tab { min-width: 100px;  alignment: center;}")
+            self.tabs.setStyleSheet(
+                "QTabBar::tab { min-width: 100px;  alignment: center;}"
+            )
         else:
             self.tabs = QStackedLayout()
         self.tabs.currentChanged.connect(self.module_changed)
@@ -82,12 +86,16 @@ class MainWindow(QMainWindow):
             )
             action.setObjectName(f"action_{name}")
             if "--dev" in sys.argv:
-                action.setEnabled(False)  # only view the loading speed  #TODO comment for production
+                action.setEnabled(
+                    False
+                )  # only view the loading speed  #TODO comment for production
             self.toolbar.addAction(action)
             if is_first:
                 self.toolbar.addSeparator()
                 sep = QWidget()
-                sep.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+                sep.setSizePolicy(
+                    QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding
+                )
                 sep.setMinimumWidth(100)
                 self.toolbar.addWidget(sep)
                 is_first = False
@@ -108,7 +116,9 @@ class MainWindow(QMainWindow):
         else:
             tab_id = self.tabs.addWidget(widget)
         if action := self.findChild(QAction, f"action_{name}"):
-            action.triggered.connect(partial(self.change_module, tab_id, plugin.get_title()))
+            action.triggered.connect(
+                partial(self.change_module, tab_id, plugin.get_title())
+            )
             action.setShortcut(QKeySequence().fromString(f"CTRL+{tab_id + 1}"))
             action.setEnabled(True)
         QApplication.processEvents()
@@ -183,16 +193,23 @@ class QOneApplication(QApplication):
 
 def usage(plugins: PluginManager, want_one: str):
     print()
-    print("Available plugins: ", ", ".join(f"--{p.lower()}" for p in plugins.modules.keys()))
+    print(
+        "Available plugins: ",
+        ", ".join(f"--{p.lower()}" for p in plugins.modules.keys()),
+    )
     print()
     print("--dev : not run pacman command + create fake EOL")
     exit(0)
 
 
-if __name__ == "__main__":
+def main():
     want_one = ""
     exclude = ("--dev", "--help")
-    if args := [a.removeprefix("--").lower() for a in sys.argv if a.startswith("--") and a not in exclude]:
+    if args := [
+        a.removeprefix("--").lower()
+        for a in sys.argv
+        if a.startswith("--") and a not in exclude
+    ]:
         want_one = args[0]
         print("# Load one plugin :", want_one)
 
@@ -211,7 +228,10 @@ if __name__ == "__main__":
         exit(app.quit())
     locale = QLocale()
     trans = QTranslator()
-    trans.load(f"qt_{locale.bcp47Name()}", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath))
+    trans.load(
+        f"qt_{locale.bcp47Name()}",
+        QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
+    )
     app.installTranslator(trans)  # dialog btns translate
 
     window = MainWindow(plugins, want_one)
@@ -219,3 +239,7 @@ if __name__ == "__main__":
     window.show()
     window.load_plugins()
     app.exec()
+
+
+if __name__ == "__main__":
+    main()
