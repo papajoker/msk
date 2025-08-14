@@ -23,7 +23,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .modules._plugin.base import PluginBase, PluginManager
+try:
+    from modules._plugin.base import PluginBase, PluginManager
+except ImportError:
+    # if run as module
+    from .modules._plugin.base import PluginBase, PluginManager
 
 
 class MainWindow(QMainWindow):
