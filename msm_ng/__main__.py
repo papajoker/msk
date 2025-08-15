@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 from functools import partial
+from pathlib import Path
 
 from PySide6.QtCore import (
     QLibraryInfo,
@@ -39,21 +40,17 @@ class MainWindow(QMainWindow):
         self.plugins.loaded.connect(self.plugin_loaded)
         self.plugins.loaded_end.connect(self.plugins_loaded)
         self.want_one = want_one
-        self.setWindowTitle("Manjaro System Kernels")
+        self.setWindowTitle(self.tr("Manjaro System Kernels"))
         self.setWindowIcon(QIcon.fromTheme("manjaro"))
         self.setMinimumSize(400, 335)
         self.resize(790, 600)
 
         if self.USE_TABS:
-            self.tabs = (
-                QTabWidget()
-            )  # TODO rewrite paint() for display icon + text in tab
+            self.tabs = QTabWidget()  # TODO rewrite paint() for display icon + text in tab
             self.tabs.setTabPosition(QTabWidget.TabPosition.East)
             self.tabs.setIconSize(QSize(42, 42))
             self.tabs.setTabBarAutoHide(True)
-            self.tabs.setStyleSheet(
-                "QTabBar::tab { min-width: 100px;  alignment: center;}"
-            )
+            self.tabs.setStyleSheet("QTabBar::tab { min-width: 100px;  alignment: center;}")
         else:
             self.tabs = QStackedLayout()
         self.tabs.currentChanged.connect(self.module_changed)
@@ -90,16 +87,12 @@ class MainWindow(QMainWindow):
             )
             action.setObjectName(f"action_{name}")
             if "--dev" in sys.argv:
-                action.setEnabled(
-                    False
-                )  # only view the loading speed  #TODO comment for production
+                action.setEnabled(False)  # only view the loading speed  #TODO comment for production
             self.toolbar.addAction(action)
             if is_first:
                 self.toolbar.addSeparator()
                 sep = QWidget()
-                sep.setSizePolicy(
-                    QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding
-                )
+                sep.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
                 sep.setMinimumWidth(100)
                 self.toolbar.addWidget(sep)
                 is_first = False
@@ -120,9 +113,7 @@ class MainWindow(QMainWindow):
         else:
             tab_id = self.tabs.addWidget(widget)
         if action := self.findChild(QAction, f"action_{name}"):
-            action.triggered.connect(
-                partial(self.change_module, tab_id, plugin.get_title())
-            )
+            action.triggered.connect(partial(self.change_module, tab_id, plugin.get_title()))
             action.setShortcut(QKeySequence().fromString(f"CTRL+{tab_id + 1}"))
             action.setEnabled(True)
         QApplication.processEvents()
@@ -198,7 +189,7 @@ class QOneApplication(QApplication):
 def usage(plugins: PluginManager, want_one: str):
     print()
     print(
-        "Available plugins: ",
+        QApplication.translate("help", "Available plugins") + ": ",
         ", ".join(f"--{p.lower()}" for p in plugins.modules.keys()),
     )
     print()
@@ -207,15 +198,41 @@ def usage(plugins: PluginManager, want_one: str):
 
 
 def main():
+    # best lang = QLocale.system().bcp47Name()
+    lang = QLocale.languageToCode(QLocale.system().language())
+
+    app = QOneApplication(sys.argv, idApp="MANJA-007", name="msm")
+
+    trans = QTranslator()
+    if len(lang) > 1:
+        if trans.load(f"qt_{lang}", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
+            app.installTranslator(trans)  # dialog btns translate
+
+        dir_ = Path(__file__).parent.resolve()
+        locale_dir = Path(f"/usr/share/locale/{lang}/LC_MESSAGES/")
+        if not str(dir_).startswith("/usr/"):
+            locale_dir = dir_ / f"../i18n/{lang}/LC_MESSAGES/"
+
+        locale_directory = locale_dir.resolve()
+        print("localisations is in ", locale_directory)
+
+        locale_dir = locale_directory.resolve() / f"msm_{lang}.qm"
+        trans = QTranslator()
+
+        if trans.load(str(locale_dir)):
+            if not app.installTranslator(trans):
+                print(f"Warning: {locale_dir} not installed !")
+            else:
+                print(f"{locale_dir} installed")
+        else:
+            print(f"Warning: {locale_dir} not loaded !")
+
     want_one = ""
     exclude = ("--dev", "--help")
-    if args := [
-        a.removeprefix("--").lower()
-        for a in sys.argv
-        if a.startswith("--") and a not in exclude
-    ]:
+    if args := [a.removeprefix("--").lower() for a in sys.argv if a.startswith("--") and a not in exclude]:
         want_one = args[0]
-        print("# Load one plugin :", want_one)
+        tr = QApplication.translate("help", "Load one plugin")
+        print(f"# {tr} :", want_one)
 
     plugins = PluginManager()
     plugins.scan("modules")
@@ -224,19 +241,11 @@ def main():
         usage(plugins, want_one)
         exit(0)
 
-    app = QOneApplication(sys.argv, idApp="MANJA-007", name="msm")
     if app.isActive:
         print("already launched", file=sys.stderr)
         if want_one:
             app.sendMessage(f"OPEN: {want_one}")
         exit(app.quit())
-    locale = QLocale()
-    trans = QTranslator()
-    trans.load(
-        f"qt_{locale.bcp47Name()}",
-        QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
-    )
-    app.installTranslator(trans)  # dialog btns translate
 
     window = MainWindow(plugins, want_one)
     app.message.connect(window.receive_command)

@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from PySide6.QtWidgets import QApplication
 
 from .._plugin.base import PluginBase
 
@@ -10,7 +11,7 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = "Hello"
+    NAME = QApplication.translate("PLUGINNAMES", "Hello")  # "Hello"
     ORDER = 0  # Always the first !
     COLOR = "#35bf5c"
 

@@ -5,7 +5,14 @@ from textwrap import dedent
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon, QPainter, QPalette, QPixmap
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import QApplication, QGridLayout, QLabel, QMenu, QToolButton, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QLabel,
+    QMenu,
+    QToolButton,
+    QWidget,
+)
 
 
 class HelloMain(QWidget):
@@ -13,12 +20,14 @@ class HelloMain(QWidget):
 
     def __init__(self, parent: QWidget | None):
         super().__init__(parent=parent)
-        self.setWindowTitle("Manjaro Hello")
+        self.setWindowTitle("Manjaro " + QApplication.translate("NAME", "Hello"))
         self.setMinimumWidth(400)
         layout = QGridLayout()
         self.setLayout(layout)
 
-        icon = QIcon(str(Path(__file__).parent.parent / "assets/manjaro.svg")).pixmap(72, 72)
+        icon = QIcon(str(Path(__file__).parent.parent / "assets/manjaro.svg")).pixmap(
+            72, 72
+        )
         label = QLabel(margin=10, alignment=Qt.AlignmentFlag.AlignCenter)
         label.setPixmap(icon)
         layout.addWidget(label, 0, 0, 1, 3)
@@ -45,7 +54,7 @@ class HelloMain(QWidget):
             parent=self,
             icon=self.get_icon("text-x-readme", self.SIZE_ICO),
             iconSize=QSize(self.SIZE_ICO, self.SIZE_ICO),
-            text="Documentation",
+            text=self.tr("Documentation"),
             popupMode=QToolButton.ToolButtonPopupMode.InstantPopup,
         )
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
@@ -60,7 +69,7 @@ class HelloMain(QWidget):
 
         btn = QToolButton(
             parent=self,
-            text="Support",
+            text=self.tr("Support"),
             popupMode=QToolButton.ToolButtonPopupMode.InstantPopup,
             icon=self.get_icon("forum", self.SIZE_ICO),
             iconSize=QSize(self.SIZE_ICO, self.SIZE_ICO),
@@ -77,7 +86,7 @@ class HelloMain(QWidget):
 
         btn = QToolButton(
             parent=self,
-            text="Project",
+            text=self.tr("Project"),
             icon=self.get_icon("applications-development", self.SIZE_ICO),
             iconSize=QSize(self.SIZE_ICO, self.SIZE_ICO),
             popupMode=QToolButton.ToolButtonPopupMode.InstantPopup,
@@ -94,18 +103,26 @@ class HelloMain(QWidget):
         layout.addWidget(btn, y, 2, alignment=Qt.AlignmentFlag.AlignCenter)
 
         y = 3
-        label = QLabel("...", parent=self, margin=5, alignment=Qt.AlignmentFlag.AlignCenter)
+        label = QLabel(
+            "...", parent=self, margin=5, alignment=Qt.AlignmentFlag.AlignCenter
+        )
         layout.addWidget(label, y, 0)
 
-        label = QLabel("...", parent=self, margin=5, alignment=Qt.AlignmentFlag.AlignCenter)
+        label = QLabel(
+            "...", parent=self, margin=5, alignment=Qt.AlignmentFlag.AlignCenter
+        )
         layout.addWidget(label, y, 1)
 
-        label = QLabel("...", parent=self, margin=5, alignment=Qt.AlignmentFlag.AlignCenter)
+        label = QLabel(
+            "...", parent=self, margin=5, alignment=Qt.AlignmentFlag.AlignCenter
+        )
         layout.addWidget(label, y, 2)
 
     def get_icon(self, name: str, size: int = 22) -> QPixmap:
         """Get an icon from the assets directory."""
-        return QIcon(str(Path(__file__).parent.parent / "assets" / f"{name}.svg")).pixmap(size, size)
+        return QIcon(
+            str(Path(__file__).parent.parent / "assets" / f"{name}.svg")
+        ).pixmap(size, size)
         ico = self.icon_from_svg(name, size)
         return ico.pixmap(size, size)
 

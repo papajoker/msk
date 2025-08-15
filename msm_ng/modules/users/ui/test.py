@@ -1,28 +1,30 @@
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QLocale, QTranslator
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QGridLayout, QLabel, QWidget
-from .widgets import RoundIconLabel
+from .widgets import RoundIconLabel, QApplication
 
 
 class UserMain(QWidget):
     def __init__(self, parent: QWidget | None):
         super().__init__(parent=parent)
-        self.setWindowTitle("Manage users")
+        tr = QApplication.translate("title", "Manage users")
+        self.setWindowTitle(tr)
         layout = QGridLayout()
         self.setLayout(layout)
 
         wheels = []
         with open("/etc/group") as f:
             """
-            wheel:x:998:one
+            wheel:x:998:one,two
             """
             for line in f:
                 if not line.startswith("wheel"):
                     continue
-                if user := line.split(":")[-1].rstrip():
-                    wheels.append(user)
+                if users := line.split(":")[-1].rstrip():
+                    wheels = users.split(",")
+                    break
 
         users = []
         with open("/etc/passwd") as f:
@@ -60,12 +62,15 @@ class UserMain(QWidget):
 
             if not icon or icon.isNull():
                 icon = QIcon.fromTheme("user-unknown").pixmap(48, 48)
-            icon = RoundIconLabel(self, path)
+            icon = RoundIconLabel(self, path)  # TODO if not image ?
             layout.addWidget(icon, y, 0)
-            # label.setPixmap(icon)
-            # layout.addWidget(label, y, 0)
 
-            label = QLabel(f"{user[0]}<br>{user[2]}", parent=self, margin=10, alignment=Qt.Alignment.AlignCenter)
+            label = QLabel(
+                f"{user[0]}<br>{user[2]}",
+                parent=self,
+                margin=10,
+                alignment=Qt.Alignment.AlignCenter,
+            )
 
             layout.addWidget(label, y, 1)
 
@@ -76,5 +81,6 @@ class UserMain(QWidget):
             layout.addWidget(label, y, 3)
 
             if user[4]:
-                label = QLabel("<b>Admin</b>", parent=self, margin=10)
+                tr = self.tr("Admin")
+                label = QLabel(f"<b>{tr}</b>", parent=self, margin=10)
                 layout.addWidget(label, y, 4)

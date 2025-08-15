@@ -5,8 +5,17 @@ import tomllib
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRect, QSize, Qt, Signal
-from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap
+from PySide6.QtCore import QLocale, QObject, QRect, QSize, Qt, QTranslator, Signal
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QIcon,
+    QPainter,
+    QPalette,
+    QPen,
+    QPixmap,
+)
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -21,6 +30,7 @@ class PluginBase(ABC):
     ORDER = 100
     CATEGORY = ""
     COLOR: str = ""
+    _tr = None  # FIX no want cg for QTranslator
 
     def __init__(self):
         raise RuntimeError("can use only the class !")
@@ -90,7 +100,11 @@ class PluginBase(ABC):
         painter.setFont(font)
         r = QRect(0, 0, size, size)
         # text Shadow
-        painter.drawText(r.translated(2, 2), Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter, letter)
+        painter.drawText(
+            r.translated(2, 2),
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter,
+            letter,
+        )
         painter.setPen(QPen(QColor("white"), 1))
         painter.drawText(r, Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter, letter)
         painter.end()
@@ -202,7 +216,8 @@ class PluginManager(QObject):
                 continue
             try:
                 if len(sys.argv) > 1:
-                    print("  # load ...", f"{self.path.parts[-1]}.{name}.plugin")
+                    tr = QApplication.tr("load")
+                    print(f"  # {tr} ...", f"{self.path.parts[-1]}.{name}.plugin ...")
                 mod = importlib.import_module(f"{self.path.parts[-1]}.{name}.plugin", package=name)
             except ModuleNotFoundError as err:
                 print(err, file=sys.stderr)
@@ -213,6 +228,7 @@ class PluginManager(QObject):
             if mod:
                 try:
                     self.modules[name] = mod.Plugin  # save the class # NO instance
+                    self.modules[name]._tr = self.load_translation(name)
                     if self.modules[name].COLOR:
                         continue
                     try:
@@ -231,6 +247,28 @@ class PluginManager(QObject):
         self.user_overwrite()
 
         return self.modules
+
+    def load_translation(self, name):
+        print("...", name, "loaded ...")
+        lang = QLocale.languageToCode(QLocale.system().language())
+        if len(lang) < 2:
+            return
+
+        dir_ = Path(__file__).parent.parent.parent.resolve()
+        locale_dir = Path(f"/usr/share/locale/{lang}/LC_MESSAGES/")
+        if not str(dir_).startswith("/usr/"):
+            locale_dir = dir_ / f"../i18n/{lang}/LC_MESSAGES/"
+        locale_dir = locale_dir.resolve() / f"msm_{name}_{lang}.qm"
+
+        trans = QTranslator()
+        if trans.load(str(locale_dir)) and not trans.isEmpty():
+            if not QApplication.installTranslator(trans):
+                print(f"Warning: {locale_dir} not installed !")
+            else:
+                print(f"tr: {locale_dir} installed")
+                return trans
+        # else:
+        #    print(f"Warning: {locale_dir} not loaded !")
 
     def user_overwrite(self, file_name="msk.ini") -> None:
         """Override the plugins with a user custom config."""
@@ -286,4 +324,5 @@ class PluginManager(QObject):
             if widget:
                 self.loaded.emit(widget, name)
             QApplication.processEvents()
+
         self.loaded_end.emit()

@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "Manjaro Setting Kernels"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["pyside6>=6.9.0"]
+dependencies = ["PySide6>=6.9.0"]
 
 [tool.urls]
 repository = "https://github.com/papajoker/msk"
