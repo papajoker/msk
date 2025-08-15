@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from PySide6.QtWidgets import QApplication
 
 from .._plugin.base import PluginBase
 
@@ -10,11 +11,11 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = "Material"
+    NAME = QApplication.translate("entry", "Material")
     ORDER = 80  # 10 by 10, order in main app
 
     @staticmethod
-    def i_enable() -> bool:
+    def is_enable() -> bool:
         return Path("/usr/bin/mhwd").exists()
 
     @staticmethod

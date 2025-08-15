@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from PySide6.QtWidgets import QApplication
 
 from .._plugin.base import PluginBase
 
@@ -10,7 +11,7 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = "System Info"
+    NAME = QApplication.translate("entry", "System Info")
     ORDER = 30  # 10 by 10, order in main app
     # COLOR = "#440066"
 

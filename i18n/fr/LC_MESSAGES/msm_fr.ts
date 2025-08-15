@@ -12,7 +12,7 @@
 <context>
     <name>PluginManager</name>
     <message>
-        <location filename="../../../msm_ng/modules/_plugin/base.py" line="+220"/>
+        <location filename="../../../msm_ng/modules/_plugin/base.py" line="+226"/>
         <source>load</source>
         <translation>Chargement</translation>
     </message>
@@ -33,6 +33,21 @@
         <location filename="../../../msm_ng/modules/mirrors/plugin.py" line="+15"/>
         <source>Mirrors</source>
         <translation>Miroirs</translation>
+    </message>
+    <message>
+        <location filename="../../../msm_ng/modules/system/plugin.py" line="+15"/>
+        <source>System Info</source>
+        <translation>Système informations</translation>
+    </message>
+    <message>
+        <location filename="../../../msm_ng/modules/mhwd/plugin.py" line="+15"/>
+        <source>Material</source>
+        <translation>Matériel</translation>
+    </message>
+    <message>
+        <location filename="../../../msm_ng/modules/kernels/plugin.py" line="+18"/>
+        <source>Kernels</source>
+        <translation>Noyaux</translation>
     </message>
 </context>
 <context>

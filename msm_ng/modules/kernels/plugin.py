@@ -1,6 +1,7 @@
 import platform
 import sys
 from pathlib import Path
+from PySide6.QtWidgets import QApplication
 
 from .._plugin.base import PluginBase
 
@@ -13,7 +14,7 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = "Kernels"
+    NAME = QApplication.translate("entry", "Kernels")
     ORDER = 10  # 10 by 10, order in main app
 
     @classmethod

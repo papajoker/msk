@@ -214,7 +214,6 @@ def main():
             locale_dir = dir_ / f"../i18n/{lang}/LC_MESSAGES/"
 
         locale_directory = locale_dir.resolve()
-        print("localisations is in ", locale_directory)
 
         locale_dir = locale_directory.resolve() / f"msm_{lang}.qm"
         trans = QTranslator()
