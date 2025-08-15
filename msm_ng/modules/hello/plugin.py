@@ -11,7 +11,7 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = QApplication.translate("PLUGINNAMES", "Hello")  # "Hello"
+    NAME = QApplication.translate("entry", "Hello")  # "Hello"
     ORDER = 0  # Always the first !
     COLOR = "#35bf5c"
 

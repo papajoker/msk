@@ -11,7 +11,7 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = QApplication.translate("PLUGINNAMES", "Manjaro Mirrors")  # "Mirrors manjaro"
+    NAME = QApplication.translate("entry", "Mirrors")
     ORDER = 100  # 10 by 10, order in main app
 
     @staticmethod

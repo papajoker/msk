@@ -18,6 +18,24 @@
     </message>
 </context>
 <context>
+    <name>entry</name>
+    <message>
+        <location filename="../../../msm_ng/modules/users/plugin.py" line="+16"/>
+        <source>Users</source>
+        <translation>Utilisateurs</translation>
+    </message>
+    <message>
+        <location filename="../../../msm_ng/modules/hello/plugin.py" line="+15"/>
+        <source>Hello</source>
+        <translation>Bonjour</translation>
+    </message>
+    <message>
+        <location filename="../../../msm_ng/modules/mirrors/plugin.py" line="+15"/>
+        <source>Mirrors</source>
+        <translation>Miroirs</translation>
+    </message>
+</context>
+<context>
     <name>help</name>
     <message>
         <location filename="../../../msm_ng/__main__.py" line="+149"/>

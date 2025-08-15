@@ -12,7 +12,7 @@ sys.path.pop(0)
 
 
 class Plugin(PluginBase):
-    NAME = QApplication.translate("PLUGINNAMES", "Users")  # "User"
+    NAME = QApplication.translate("entry", "Users")  # "User"
     ORDER = 20  # 10 by 10, order in main app
     # COLOR = "#440066"
 
