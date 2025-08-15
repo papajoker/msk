@@ -4,7 +4,7 @@
 <context>
     <name>NAME</name>
     <message>
-        <location filename="../../../msm_ng/modules/mirrors/main.py" line="+54"/>
+        <location filename="../../../msm_ng/modules/mirrors/main.py" line="+55"/>
         <source>Mirrors</source>
         <translation>Miroir-en-fr</translation>
     </message>

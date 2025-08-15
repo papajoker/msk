@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from ui.test import UserMain
 from pathlib import Path
 
 from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
 from PySide6.QtWidgets import QApplication
+from ui.test import UserMain
 
 
 def traduction():
@@ -28,7 +28,7 @@ def traduction():
             QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
         )
 
-    dir_ = Path(__file__).parent.resolve()
+    dir_ = Path(__file__).resolve().parent
     locale_dir = Path(f"/usr/share/locale/{lang}/LC_MESSAGES/")
     if not str(dir_).startswith("/usr/"):
         locale_dir = dir_ / f"../../../i18n/{lang}/LC_MESSAGES/"

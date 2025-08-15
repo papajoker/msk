@@ -208,7 +208,7 @@ def main():
         if trans.load(f"qt_{lang}", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
             app.installTranslator(trans)  # dialog btns translate
 
-        dir_ = Path(__file__).parent.resolve()
+        dir_ = Path(__file__).resolve().parent
         locale_dir = Path(f"/usr/share/locale/{lang}/LC_MESSAGES/")
         if not str(dir_).startswith("/usr/"):
             locale_dir = dir_ / f"../i18n/{lang}/LC_MESSAGES/"

@@ -6,11 +6,11 @@
     <message>
         <location filename="../../../msm_ng/__main__.py" line="+43"/>
         <source>Manjaro System Kernels</source>
-        <translation>Système Configuration</translation>
+        <translation>Configuration Système de ...</translation>
     </message>
 </context>
 <context>
-    <name>QApplication</name>
+    <name>PluginManager</name>
     <message>
         <location filename="../../../msm_ng/modules/_plugin/base.py" line="+220"/>
         <source>load</source>

@@ -216,7 +216,7 @@ class PluginManager(QObject):
                 continue
             try:
                 if len(sys.argv) > 1:
-                    tr = QApplication.tr("load")
+                    tr = self.tr("load")
                     print(f"  # {tr} ...", f"{self.path.parts[-1]}.{name}.plugin ...")
                 mod = importlib.import_module(f"{self.path.parts[-1]}.{name}.plugin", package=name)
             except ModuleNotFoundError as err:
@@ -254,7 +254,7 @@ class PluginManager(QObject):
         if len(lang) < 2:
             return
 
-        dir_ = Path(__file__).parent.parent.parent.resolve()
+        dir_ = Path(__file__).resolve().parent.parent.parent
         locale_dir = Path(f"/usr/share/locale/{lang}/LC_MESSAGES/")
         if not str(dir_).startswith("/usr/"):
             locale_dir = dir_ / f"../i18n/{lang}/LC_MESSAGES/"
