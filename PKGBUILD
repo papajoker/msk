@@ -34,7 +34,7 @@ package() {
   ./traductions.sh "$pkgdir/usr/share/locale"
   python -m installer --destdir="${pkgdir}" dist/*.whl --compile-bytecode 1
 
-  install -Dm644 "${srcdir}/msk-${pkgver}/$py_pkg/msm-tofix.desktop" "${pkgdir}/usr/share/applications/"
+  install -Dm644 "${srcdir}/msk-${pkgver}/$py_pkg/msm-test.desktop" "${pkgdir}/usr/share/applications/"
   local pypkg_dir="$(python -c 'import site; print(site.getsitepackages()[0])')"
   ln -s "$pypkg_dir/$py_pkg/__main__.py" "$pkgdir"/usr/bin/msm-ng
   for plugin in "hello" "applications" "mirrors" "mhwd" "users" "system"; do
