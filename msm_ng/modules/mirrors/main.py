@@ -50,8 +50,6 @@ def traduction():
 
 def main():
     app = QApplication([])
-
-    app.translate("NAME", "Mirrors")  # title in plugin.py ?
     _ = traduction()
 
     win = MirrorsWidget(None)

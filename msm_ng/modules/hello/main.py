@@ -47,7 +47,6 @@ def traduction():
 
 def main():
     app = QApplication([])
-    app.translate("NAME", "Hello")  # title in plugin.py ?
     _ = traduction()
 
     win = HelloMain(None)

@@ -22,8 +22,15 @@
 <context>
     <name>NAME</name>
     <message>
-        <location filename="../../../msm_ng/modules/hello/main.py" line="+51"/>
-        <location filename="../../../msm_ng/modules/hello/ui/hello.py" line="-66"/>
+        <location line="-66"/>
+        <source>Hello</source>
+        <translation>Bonjour</translation>
+    </message>
+</context>
+<context>
+    <name>entry</name>
+    <message>
+        <location filename="../../../msm_ng/modules/hello/plugin.py" line="+16"/>
         <source>Hello</source>
         <translation>Bonjour</translation>
     </message>

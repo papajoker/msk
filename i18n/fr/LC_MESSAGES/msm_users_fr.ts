@@ -4,9 +4,8 @@
 <context>
     <name>NAME</name>
     <message>
-        <location filename="../../../msm_ng/modules/users/main.py" line="+52"/>
         <source>Users</source>
-        <translation>Utilisateurs</translation>
+        <translation type="vanished">Utilisateurs</translation>
     </message>
 </context>
 <context>
@@ -18,9 +17,17 @@
     </message>
 </context>
 <context>
+    <name>entry</name>
+    <message>
+        <location filename="../../../msm_ng/modules/users/plugin.py" line="+16"/>
+        <source>Users</source>
+        <translation type="unfinished">Utilisateurs</translation>
+    </message>
+</context>
+<context>
     <name>title</name>
     <message>
-        <location line="-72"/>
+        <location filename="../../../msm_ng/modules/users/ui/test.py" line="-72"/>
         <source>Manage users</source>
         <translation>Gérer les utilisateurs</translation>
     </message>

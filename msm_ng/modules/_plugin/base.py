@@ -229,6 +229,8 @@ class PluginManager(QObject):
                 try:
                     self.modules[name] = mod.Plugin  # save the class # NO instance
                     self.modules[name]._tr = self.load_translation(name)
+                    if self.modules[name].NAME:
+                        self.modules[name].NAME = QApplication.translate("entry", self.modules[name].NAME)
                     if self.modules[name].COLOR:
                         continue
                     try:

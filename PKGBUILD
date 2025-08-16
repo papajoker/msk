@@ -25,22 +25,20 @@ build() {
   #cp ../../pyproject.toml .
   #echo 'version="0.9.1a1"' >msm_ng/__init__.py ?
   python -m build --wheel --no-isolation
-  ./traductions.sh
 }
 
 package() {
   cd "msk-${pkgver}"
-  python -m installer --destdir="${pkgdir}" dist/*.whl --compile-bytecode 1
-
   mkdir -p "$pkgdir"/usr/{bin,share/applications,share/locale/}
 
-  install -Dm644 "${srcdir}/msk-${pkgver}/$py_pkg/msm-test.desktop" "${pkgdir}/usr/share/applications/"
+  ./traductions.sh "$pkgdir/usr/share/locale"
+  python -m installer --destdir="${pkgdir}" dist/*.whl --compile-bytecode 1
+
+  install -Dm644 "${srcdir}/msk-${pkgver}/$py_pkg/msm-tofix.desktop" "${pkgdir}/usr/share/applications/"
   local pypkg_dir="$(python -c 'import site; print(site.getsitepackages()[0])')"
   ln -s "$pypkg_dir/$py_pkg/__main__.py" "$pkgdir"/usr/bin/msm-ng
   for plugin in "hello" "applications" "mirrors" "mhwd" "users" "system"; do
     ln -s "$pypkg_dir/$py_pkg/modules/$plugin/main.py" "$pkgdir"/usr/bin/msm-$plugin
   done
 
-  cd i18n
-  cp -aR --parents **/LC_MESSAGES/*.qm "$pkgdir/usr/share/locale/"
 }
