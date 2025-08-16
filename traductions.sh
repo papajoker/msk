@@ -2,7 +2,6 @@
 
 DEST="${1:-i18n}"
 echo "destination: $DEST"
-exit 0
 
 readarray -d '' plugins < <(find "msm_ng/modules/" -depth -name "plugin.py" -print0)
 
