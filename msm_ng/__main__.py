@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
     def __init__(self, plugins: PluginManager, want_one=""):
         super().__init__()
         self.plugins = plugins
+        self._load = True
         self.plugins.loaded.connect(self.plugin_loaded)
         self.plugins.loaded_end.connect(self.plugins_loaded)
         self.want_one = want_one
@@ -101,6 +102,7 @@ class MainWindow(QMainWindow):
         self.plugins.load_plugins(want_one=self.want_one, parent=self)
 
     def plugin_loaded(self, widget: QWidget, name: str):
+        self._load = True
         # responses to self.plugins.load_plugins()
         plugin: PluginBase = self.plugins.modules[name]
         widget.setParent(self)
@@ -120,7 +122,14 @@ class MainWindow(QMainWindow):
 
     def plugins_loaded(self):
         """all plugins loaded"""
+        self._load = False
         self.toolbar.setVisible(self.tabs.count() > 1)
+
+    def closeEvent(self, event):
+        if self._load:
+            event.ignore()
+        else:
+            event.accept()
 
     def module_changed(self, tab_id: int):
         self.setWindowTitle(self.tabs.currentWidget().windowTitle())
@@ -205,6 +214,7 @@ def main():
 
     trans = QTranslator()
     if len(lang) > 1:
+
         if trans.load(f"qt_{lang}", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
             app.installTranslator(trans)  # dialog btns translate
 
