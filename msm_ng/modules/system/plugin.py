@@ -17,7 +17,7 @@ class Plugin(PluginBase):
     # COLOR = "#440066"
 
     @staticmethod
-    def i_enable() -> bool:
+    def is_enable() -> bool:
         # if kde : return False
         # or if wayland : return False
         return True

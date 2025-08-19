@@ -16,7 +16,7 @@ class Plugin(PluginBase):
     ORDER = 100  # 10 by 10, order in main app
 
     @staticmethod
-    def i_enable() -> bool:
+    def is_enable() -> bool:
         return Path("/usr/bin/pacman-mirrors").exists()
 
     @staticmethod
