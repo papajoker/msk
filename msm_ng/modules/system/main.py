@@ -1,41 +1,52 @@
 #!/usr/bin/env python
 import json
+import sys
 import subprocess
-import logging
 from pathlib import Path
+from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QTextEdit, QWidget
 
-logger = logging.getLogger("plugin.system")
-logging.basicConfig(filename=str(Path(__file__).parent / "msm.log"), level=logging.DEBUG)
 
-class SystemWidget(QWidget):
-    def __init__(self, parent: QWidget | None):
-        super().__init__(parent=parent)
-        self.setWindowTitle("System Info")
-        self.mlayout = QHBoxLayout()
-        self.setLayout(self.mlayout)
+class InxiWorker(QThread):
+    eol = Signal(str)
 
-        self._set()
-
-    def _set(self) -> None:
+    def run(self):
         """inxi infos"""
         try:
-            logger.info("run inxi...")
             result = subprocess.run(
-                "/usr/bin/inxi -Fx --output json --output-file print",
+                "/usr/bin/inxi -Fx --tty --output json --output-file print",
                 capture_output=True,
+                #stdout=f_obj,
                 text=True,
                 shell=True,
                 check=True,
             )
-            #BUG if loaded in gui : crash
-            logger.info("end inxi")
             data = result.stdout
-        except subprocess.CalledProcessError as e:
-            data = f"Error running inxi: {e}"
+        except subprocess.CalledProcessError as err:
+            print(f"Error inxi call : {err}", file=sys.stderr)
+        except Exception as err:
+            print(f"Error running inxi : {err}", file=sys.stderr)
+        if data:
+            self.eol.emit(data)
+
+class SystemWidget(QWidget):
+    def __init__(self, parent: QWidget | None):
+        super().__init__(parent=parent)
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(600)
+        self.setWindowTitle("System Info")
+        self.mlayout = QHBoxLayout()
+        self.setLayout(self.mlayout)
+
+        self.inxi = InxiWorker()
+        self.inxi.eol.connect(self._set)
+        self.inxi.start()
+
+    def _set(self, datas):
+        """display inxi infos"""
 
         # print(data)
-        data_json = json.loads(data)
+        data_json = json.loads(datas)
         txt = ""
         for rub in data_json:
             for key, value in rub.items():
@@ -49,10 +60,9 @@ class SystemWidget(QWidget):
                         else:
                             txt = f"{txt}     <b>{key.split('#')[-1]}</b> :<br>"
 
-        # label = QLabel(txt, parent=self, margin=20)
         edit = QTextEdit(readOnly=True)
-        edit.setHtml(txt.replace(" ", "&nbsp;"))
         # edit.setCurrentFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        edit.setHtml(txt.replace(" ", "&nbsp;"))
         self.mlayout.addWidget(edit)
 
 

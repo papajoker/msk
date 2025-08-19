@@ -19,7 +19,7 @@ class Plugin(PluginBase):
     @staticmethod
     def is_enable() -> bool:
         #return False  # BUG in gui ?
-        return True
+        return Path("/usr/bin/inxi").exists()
 
     @staticmethod
     def get_class():
