@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 import json
 import subprocess
+import logging
+from pathlib import Path
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QTextEdit, QWidget
 
+logger = logging.getLogger("plugin.system")
+logging.basicConfig(filename=str(Path(__file__).parent / "msm.log"), level=logging.DEBUG)
 
 class SystemWidget(QWidget):
     def __init__(self, parent: QWidget | None):
@@ -16,6 +20,7 @@ class SystemWidget(QWidget):
     def _set(self) -> None:
         """inxi infos"""
         try:
+            logger.info("run inxi...")
             result = subprocess.run(
                 "/usr/bin/inxi -Fx --output json --output-file print",
                 capture_output=True,
@@ -23,6 +28,8 @@ class SystemWidget(QWidget):
                 shell=True,
                 check=True,
             )
+            #BUG if loaded in gui : crash
+            logger.info("end inxi")
             data = result.stdout
         except subprocess.CalledProcessError as e:
             data = f"Error running inxi: {e}"

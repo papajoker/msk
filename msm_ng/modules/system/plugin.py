@@ -18,8 +18,7 @@ class Plugin(PluginBase):
 
     @staticmethod
     def is_enable() -> bool:
-        # if kde : return False
-        # or if wayland : return False
+        #return False  # BUG in gui ?
         return True
 
     @staticmethod

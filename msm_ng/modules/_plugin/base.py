@@ -191,6 +191,7 @@ colors = [
 
 class PluginManager(QObject):
     loaded = Signal(QWidget, str)  # widget, plugin name
+    disable = Signal(str)  # plugin name
     loaded_end = Signal()
 
     def __init__(self):
@@ -325,6 +326,9 @@ class PluginManager(QObject):
             widget, _ = self.load_plugin(plugin, name, parent=parent)
             if widget:
                 self.loaded.emit(widget, name)
+            else:
+                self.disable.emit(name)
             QApplication.processEvents()
 
         self.loaded_end.emit()
+

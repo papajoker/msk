@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
         self.plugins = plugins
         self._load = True
         self.plugins.loaded.connect(self.plugin_loaded)
+        self.plugins.disable.connect(self.plugin_disable)
         self.plugins.loaded_end.connect(self.plugins_loaded)
         self.want_one = want_one
         self.setWindowTitle(self.tr("Manjaro System Kernels"))
@@ -70,7 +71,7 @@ class MainWindow(QMainWindow):
         self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
 
     def load_plugins(self):
-        # not call by this object !
+        # not call by this object but parent !
         icon_size = self.plugins.get_icon_size()
         self.toolbar.setIconSize(QSize(icon_size, icon_size))
 
@@ -80,6 +81,8 @@ class MainWindow(QMainWindow):
             if self.want_one and name != self.want_one:
                 continue
             plugin: PluginBase = self.plugins.modules[name]
+            if not plugin.is_enable():
+                continue
 
             action = QAction(
                 plugin.get_icon(self.toolbar.iconSize().height()),
@@ -119,6 +122,11 @@ class MainWindow(QMainWindow):
             action.setShortcut(QKeySequence().fromString(f"CTRL+{tab_id + 1}"))
             action.setEnabled(True)
         QApplication.processEvents()
+
+    def plugin_disable(self, name: str):
+        if action := self.findChild(QAction, f"action_{name}"):
+            action.setEnabled(False)
+            #self.toolbar.removeAction(action)
 
     def plugins_loaded(self):
         """all plugins loaded"""

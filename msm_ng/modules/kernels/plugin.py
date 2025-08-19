@@ -32,6 +32,9 @@ class Plugin(PluginBase):
         if platform.machine() != "x86_64":
             print("Only for x86 cpu", file=sys.stderr)
             return False
+        if platform.freedesktop_os_release()["ID"].lower() != "manjaro":
+            print("Only for manjaro", file=sys.stderr)
+            return False
         return True
 
     @staticmethod
